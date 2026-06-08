@@ -28,6 +28,12 @@ resource "aws_instance" "bastion" {
   subnet_id               = var.public_subnets[0] # Place in public-1a
   vpc_security_group_ids  = [var.bastion_sg_id]
 
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+  }
+
   tags = {
     Name        = "${var.project_name}-bastion"
     Environment = var.environment
@@ -56,9 +62,9 @@ resource "aws_lb" "main" {
 # Target Group 1: Nginx Frontend
 resource "aws_lb_target_group" "frontend" {
   name     = "${var.project_name}-frontend-tg"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = var.vpc_id
+  port             = 80
+  protocol         = "HTTP"
+  vpc_id           = var.vpc_id
 
   health_check {
     path                = "/index.html"
@@ -269,6 +275,12 @@ resource "aws_launch_template" "frontend" {
   instance_type = "t3.small"
   key_name      = var.key_name
 
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+  }
+
   # IAM Instance Profile — grants SSM (git config) + CloudWatch access
   iam_instance_profile {
     name = var.ec2_frontend_instance_profile_name
@@ -298,6 +310,12 @@ resource "aws_launch_template" "backend" {
   image_id      = data.aws_ami.ubuntu.id
   instance_type = "t3.small"
   key_name      = var.key_name
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+  }
 
   # IAM Instance Profile — grants DynamoDB + SSM + S3 + CloudWatch access
   iam_instance_profile {

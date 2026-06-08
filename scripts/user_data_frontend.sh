@@ -43,7 +43,7 @@ rm -rf "$APP_DIR"
 git clone --branch "$GIT_BRANCH" --depth 1 "$GIT_REPO" /tmp/fanvault-repo
 
 # Navigate to the frontend workspace and install + build
-cd /tmp/fanvault-repo/fanvault-v2-mono/fanvault-frontend
+cd /tmp/fanvault-repo/fanvault-frontend
 npm ci --prefer-offline
 
 # Write the frontend .env.production so Vite injects the correct API base URL

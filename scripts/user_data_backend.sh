@@ -89,7 +89,7 @@ git clone --branch "$GIT_BRANCH" --depth 1 "$GIT_REPO" /tmp/fanvault-repo
 
 # ── Identity Service ──────────────────────────────────────────────────────────
 echo "  Installing fanvault-user-auth-service..."
-cp -r /tmp/fanvault-repo/fanvault-v2-mono/fanvault-user-auth-service "$APP_BASE/fanvault-user-auth-service"
+cp -r /tmp/fanvault-repo/fanvault-user-auth-service "$APP_BASE/fanvault-user-auth-service"
 cd "$APP_BASE/fanvault-user-auth-service"
 npm install --omit=dev
 
@@ -118,7 +118,7 @@ echo "  ✅ fanvault-user-auth-service configured."
 
 # ── Commerce Service ──────────────────────────────────────────────────────────
 echo "  Installing fanvault-commerce-service..."
-cp -r /tmp/fanvault-repo/fanvault-v2-mono/fanvault-commerce-service "$APP_BASE/fanvault-commerce-service"
+cp -r /tmp/fanvault-repo/fanvault-commerce-service "$APP_BASE/fanvault-commerce-service"
 cd "$APP_BASE/fanvault-commerce-service"
 npm install --omit=dev
 
@@ -151,14 +151,14 @@ echo "[6/7] Starting services via PM2..."
 cd "$APP_BASE"
 
 # Start Identity Service
-pm2 start fanvault-user-auth-service/src/index.js \
+pm2 start src/index.js \
     --name "fanvault-identity" \
     --cwd fanvault-user-auth-service \
     --log /var/log/fanvault-identity.log \
     --time
 
 # Start Commerce Service
-pm2 start fanvault-commerce-service/src/index.js \
+pm2 start src/index.js \
     --name "fanvault-commerce" \
     --cwd fanvault-commerce-service \
     --log /var/log/fanvault-commerce.log \

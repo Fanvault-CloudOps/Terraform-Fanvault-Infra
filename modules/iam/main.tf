@@ -185,6 +185,11 @@ resource "aws_iam_role_policy" "backend_cloudwatch" {
   policy = data.aws_iam_policy_document.ec2_cloudwatch.json
 }
 
+resource "aws_iam_role_policy_attachment" "backend_ssm_core" {
+  role       = aws_iam_role.ec2_backend.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # ── Backend EC2 Instance Profile ─────────────────────────────────────────────
 # This is what you attach to the Launch Template (iam_instance_profile)
 resource "aws_iam_instance_profile" "ec2_backend" {
@@ -240,6 +245,11 @@ resource "aws_iam_role_policy" "frontend_cloudwatch" {
   name   = "${var.project_name}-frontend-cloudwatch-policy"
   role   = aws_iam_role.ec2_frontend.id
   policy = data.aws_iam_policy_document.ec2_cloudwatch.json
+}
+
+resource "aws_iam_role_policy_attachment" "frontend_ssm_core" {
+  role       = aws_iam_role.ec2_frontend.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 # ── Frontend EC2 Instance Profile ─────────────────────────────────────────────
