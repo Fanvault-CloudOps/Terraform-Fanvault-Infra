@@ -34,27 +34,6 @@ resource "aws_instance" "bastion" {
   }
 }
 
-# Private MongoDB Server (Inside secure Database Subnet)
-resource "aws_instance" "mongodb" {
-  ami                     = data.aws_ami.ubuntu.id
-  instance_type           = "t3.medium"
-  key_name                = var.key_name
-  subnet_id               = var.database_private_subnets[0] # Place in db-1a
-  vpc_security_group_ids  = [var.db_sg_id]
-  private_ip              = "10.0.31.100" # Static IP within database subnet
-
-  root_block_device {
-    volume_size           = 50
-    volume_type           = "gp3"
-    iops                  = 3000
-    throughput            = 125
-  }
-
-  tags = {
-    Name        = "${var.project_name}-mongodb"
-    Environment = var.environment
-  }
-}
 
 # -----------------------------------------------------------------------------
 # ALB & Target Groups

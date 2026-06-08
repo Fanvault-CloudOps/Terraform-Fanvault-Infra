@@ -134,39 +134,3 @@ resource "aws_security_group" "backend" {
   }
 }
 
-# 5. Database Security Group (Strictly isolated in private database subnets)
-resource "aws_security_group" "db" {
-  name        = "${var.project_name}-db-sg"
-  description = "Security Group for isolated MongoDB database server"
-  vpc_id      = var.vpc_id
-
-  ingress {
-    description     = "Allow port 27017 query traffic from backends only"
-    from_port       = 27017
-    to_port         = 27017
-    protocol        = "tcp"
-    security_groups = [aws_security_group.backend.id]
-  }
-
-  ingress {
-    description     = "Allow administrative SSH from Bastion only"
-    from_port       = 22
-    to_port         = 22
-    protocol        = "tcp"
-    security_groups = [aws_security_group.bastion.id]
-  }
-
-  # Stateful return traffic allowed automatically, no public egress routes
-  egress {
-    description = "Allow no active public outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["10.0.0.0/16"] # Restricted to internal VPC range
-  }
-
-  tags = {
-    Name        = "${var.project_name}-db-sg"
-    Environment = var.environment
-  }
-}

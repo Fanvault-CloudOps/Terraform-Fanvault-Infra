@@ -96,14 +96,7 @@ module "s3_lambda" {
   environment     = var.environment
 }
 
-# 7. DNS Module (Route53 Private Zone mapping db.fanvault.internal)
-module "dns" {
-  source             = "./modules/dns"
-  vpc_id             = module.vpc.vpc_id
-  mongodb_private_ip = module.compute.mongodb_private_ip
-  project_name       = var.project_name
-  environment        = var.environment
-}
+
 
 # 8. Compute Module (Bastion, MongoDB, ALB, Target Groups, Launch Templates, ASGs)
 module "compute" {
@@ -116,7 +109,6 @@ module "compute" {
   alb_sg_id                = module.security.alb_sg_id
   frontend_sg_id           = module.security.frontend_sg_id
   backend_sg_id            = module.security.backend_sg_id
-  db_sg_id                 = module.security.db_sg_id
   bastion_sg_id            = module.security.bastion_sg_id
   lambda_function_arn      = module.s3_lambda.lambda_function_arn
   lambda_function_name     = module.s3_lambda.lambda_function_name

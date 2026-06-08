@@ -8,7 +8,4 @@ output "bastion_public_ip" {
   description = "Public IP address of the Bastion jump host"
 }
 
-output "mongodb_private_ip" {
-  value       = aws_instance.mongodb.private_ip
-  description = "Private IP address of the MongoDB instance"
-}
+

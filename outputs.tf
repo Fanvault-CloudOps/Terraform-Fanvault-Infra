@@ -8,7 +8,4 @@ output "bastion_public_ip" {
   description = "The public IP address of the Bastion host (Jump Box)"
 }
 
-output "mongodb_private_ip" {
-  value       = module.compute.mongodb_private_ip
-  description = "The private IP address of the MongoDB EC2 instance in us-east-1"
-}
+

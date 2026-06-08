@@ -38,10 +38,6 @@ variable "backend_sg_id" {
   description = "Backend App security group ID"
 }
 
-variable "db_sg_id" {
-  type        = string
-  description = "MongoDB database security group ID"
-}
 
 variable "bastion_sg_id" {
   type        = string
