@@ -1,3 +1,7 @@
+# =============================================================================
+# IAM Module — Variables
+# =============================================================================
+
 variable "project_name" {
   type        = string
   description = "Project name prefix"
@@ -6,4 +10,26 @@ variable "project_name" {
 variable "environment" {
   type        = string
   description = "Environment name"
+}
+
+# DynamoDB table ARNs — used to scope the EC2 instance policy
+variable "dynamodb_table_arns" {
+  type        = list(string)
+  description = "ARNs of all DynamoDB tables the backend EC2 needs access to"
+  default     = []
+}
+
+# SSM parameter path prefix — used to scope GetParameter access
+variable "ssm_parameter_prefix" {
+  type        = string
+  description = "SSM Parameter Store path prefix (e.g. /fanvault)"
+  default     = "/fanvault"
+}
+
+# S3 bucket name prefix — used to build a scoped GetObject ARN pattern
+# Avoids a circular dependency with the s3_lambda module.
+variable "s3_bucket_name_prefix" {
+  type        = string
+  description = "S3 bucket name prefix (e.g. 'fanvault') used to scope s3:GetObject policy to 'arn:aws:s3:::fanvault-*/*'"
+  default     = "fanvault"
 }

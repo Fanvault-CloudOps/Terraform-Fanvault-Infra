@@ -72,3 +72,13 @@ variable "environment" {
   type        = string
   description = "Environment name"
 }
+
+variable "ec2_backend_instance_profile_name" {
+  type        = string
+  description = "Name of the IAM instance profile to attach to backend EC2 Launch Template"
+}
+
+variable "ec2_frontend_instance_profile_name" {
+  type        = string
+  description = "Name of the IAM instance profile to attach to frontend EC2 Launch Template"
+}

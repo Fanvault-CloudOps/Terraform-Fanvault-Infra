@@ -27,3 +27,27 @@ variable "key_name" {
   description = "The EC2 key pair name to use for SSH authentication"
   default     = "fanvault-key"
 }
+
+variable "cors_origin" {
+  type        = string
+  description = "Allowed CORS origin for both backend services (e.g. https://fanvault.example.com)"
+  default     = "https://fanvault.example.com"
+}
+
+# ── Secrets — supply via terraform.tfvars or TF_VAR_* env variables ──────────
+# These are stored as SecureString in SSM Parameter Store by the ssm module.
+# Never commit actual values to source control.
+
+variable "jwt_secret" {
+  type        = string
+  description = "JWT access token signing secret — minimum 32 characters"
+  sensitive   = true
+  default     = "CHANGE_ME_TO_A_RANDOM_32_PLUS_CHAR_STRING"
+}
+
+variable "jwt_refresh_secret" {
+  type        = string
+  description = "JWT refresh token signing secret — different from jwt_secret"
+  sensitive   = true
+  default     = "CHANGE_ME_TO_A_DIFFERENT_RANDOM_32_PLUS_CHAR_STRING"
+}

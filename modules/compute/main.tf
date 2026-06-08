@@ -147,7 +147,7 @@ resource "aws_lb_target_group" "commerce" {
 resource "aws_lb_target_group" "lambda" {
   name        = "${var.project_name}-lambda-tg"
   target_type = "lambda"
-  vpc_id      = var.vpc_id
+  # vpc_id      = var.vpc_id
 
   tags = {
     Name        = "${var.project_name}-lambda-tg"
@@ -174,31 +174,12 @@ resource "aws_lb_target_group_attachment" "lambda" {
 # ALB Listeners & Rules
 # -----------------------------------------------------------------------------
 
-# HTTP Listener (Port 80) -> Redirect to HTTPS
+# HTTP Listener (Port 80) -> Forward to Frontend target group by default
+# Note: HTTPS termination will be handled by CloudFront later.
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
   protocol          = "HTTP"
-
-  default_action {
-    type = "redirect"
-
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
-  }
-}
-
-# HTTPS Listener (Port 443) -> Forward to Frontend target group by default
-# Note: Self-signed certificate for demo purposes in code. Replace with real ACM ARN.
-resource "aws_lb_listener" "https" {
-  load_balancer_arn = aws_lb.main.arn
-  port              = "443"
-  protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn   = "arn:aws:acm:us-east-1:123456789012:certificate/placeholder-arn" # Replace in production
 
   default_action {
     type             = "forward"
@@ -208,7 +189,7 @@ resource "aws_lb_listener" "https" {
 
 # Rule 1 (P5): Host arch.fanvault.com -> Lambda Target Group
 resource "aws_lb_listener_rule" "arch_host" {
-  listener_arn = aws_lb_listener.https.arn
+  listener_arn = aws_lb_listener.http.arn
   priority     = 5
 
   action {
@@ -225,7 +206,7 @@ resource "aws_lb_listener_rule" "arch_host" {
 
 # Rule 2 (P10): Path /api/auth/* -> Identity TG
 resource "aws_lb_listener_rule" "auth_path" {
-  listener_arn = aws_lb_listener.https.arn
+  listener_arn = aws_lb_listener.http.arn
   priority     = 10
 
   action {
@@ -242,7 +223,7 @@ resource "aws_lb_listener_rule" "auth_path" {
 
 # Rule 3 (P20): Path /api/users/* -> Identity TG
 resource "aws_lb_listener_rule" "users_path" {
-  listener_arn = aws_lb_listener.https.arn
+  listener_arn = aws_lb_listener.http.arn
   priority     = 20
 
   action {
@@ -259,7 +240,7 @@ resource "aws_lb_listener_rule" "users_path" {
 
 # Rule 4 (P30): Path /api/products/* -> Commerce TG
 resource "aws_lb_listener_rule" "products_path" {
-  listener_arn = aws_lb_listener.https.arn
+  listener_arn = aws_lb_listener.http.arn
   priority     = 30
 
   action {
@@ -276,7 +257,7 @@ resource "aws_lb_listener_rule" "products_path" {
 
 # Rule 5 (P40): Path /api/orders/* -> Commerce TG
 resource "aws_lb_listener_rule" "orders_path" {
-  listener_arn = aws_lb_listener.https.arn
+  listener_arn = aws_lb_listener.http.arn
   priority     = 40
 
   action {
@@ -292,17 +273,30 @@ resource "aws_lb_listener_rule" "orders_path" {
 }
 
 # -----------------------------------------------------------------------------
-# Auto Scaling Groups & Launch Templates
+# Launch Templates (2 total: Frontend + Backend)
+# -----------------------------------------------------------------------------
+# ARCHITECTURE: Monolithic 2-tier EC2 deployment.
+# - Frontend LT : Nginx serving compiled React/Vite static files (port 80)
+# - Backend LT  : Runs BOTH fanvault-user-auth-service (port 3001)
+#                 AND fanvault-commerce-service (port 3002) on the same instance.
+#   The single Backend ASG registers to BOTH identity-tg and commerce-tg so
+#   the ALB can still route /api/auth/* → port 3001 and /api/products/* → port 3002.
 # -----------------------------------------------------------------------------
 
-# Helper Template for Application Nodes
-# Note: In real setup, Golden AMI is created and specified here.
-# For bootstrap, we enable systemd services on instance creation.
+# Launch Template 1: Frontend (Nginx / React static SPA)
 resource "aws_launch_template" "frontend" {
   name_prefix   = "${var.project_name}-frontend-lt-"
   image_id      = data.aws_ami.ubuntu.id
   instance_type = "t3.small"
   key_name      = var.key_name
+
+  # IAM Instance Profile — grants SSM (git config) + CloudWatch access
+  iam_instance_profile {
+    name = var.ec2_frontend_instance_profile_name
+  }
+
+  # user_data installs Nginx, deploys the compiled SPA, and starts Nginx
+  user_data = base64encode(file("${path.module}/../../scripts/user_data_frontend.sh"))
 
   network_interfaces {
     associate_public_ip_address = false
@@ -318,11 +312,21 @@ resource "aws_launch_template" "frontend" {
   }
 }
 
-resource "aws_launch_template" "identity" {
-  name_prefix   = "${var.project_name}-identity-lt-"
+# Launch Template 2: Backend (Identity + Commerce — monolithic node)
+# Single template boots BOTH Node.js services on the same EC2 instance.
+resource "aws_launch_template" "backend" {
+  name_prefix   = "${var.project_name}-backend-lt-"
   image_id      = data.aws_ami.ubuntu.id
   instance_type = "t3.small"
   key_name      = var.key_name
+
+  # IAM Instance Profile — grants DynamoDB + SSM + S3 + CloudWatch access
+  iam_instance_profile {
+    name = var.ec2_backend_instance_profile_name
+  }
+
+  # user_data installs Node.js 20, deploys both services, starts them via PM2
+  user_data = base64encode(file("${path.module}/../../scripts/user_data_backend.sh"))
 
   network_interfaces {
     associate_public_ip_address = false
@@ -332,44 +336,24 @@ resource "aws_launch_template" "identity" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name        = "${var.project_name}-identity-node"
-      Environment = var.environment
-    }
-  }
-}
-
-resource "aws_launch_template" "commerce" {
-  name_prefix   = "${var.project_name}-commerce-lt-"
-  image_id      = data.aws_ami.ubuntu.id
-  instance_type = "t3.small"
-  key_name      = var.key_name
-
-  network_interfaces {
-    associate_public_ip_address = false
-    security_groups             = [var.backend_sg_id]
-  }
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = {
-      Name        = "${var.project_name}-commerce-node"
+      Name        = "${var.project_name}-backend-node"
       Environment = var.environment
     }
   }
 }
 
 # -----------------------------------------------------------------------------
-# Auto Scaling Groups
+# Auto Scaling Groups (2 total: Frontend + Backend)
 # -----------------------------------------------------------------------------
 
-# Frontend ASG
+# ASG 1: Frontend
 resource "aws_autoscaling_group" "frontend" {
   name_prefix         = "${var.project_name}-frontend-asg-"
-  vpc_zone_identifier = var.frontend_private_subnets # Private Subnets 1a/1b
+  vpc_zone_identifier = var.frontend_private_subnets
   target_group_arns   = [aws_lb_target_group.frontend.arn]
-  desired_capacity    = 2
-  min_size            = 2
-  max_size            = 4
+  desired_capacity    = 1 # Testing: 1 instance. Change to 2 for production.
+  min_size            = 1
+  max_size            = 1 # Set to 4 in production.
 
   launch_template {
     id      = aws_launch_template.frontend.id
@@ -382,19 +366,29 @@ resource "aws_autoscaling_group" "frontend" {
       min_healthy_percentage = 50
     }
   }
+
+  tag {
+    key                 = "Name"
+    value               = "${var.project_name}-frontend-asg"
+    propagate_at_launch = false
+  }
 }
 
-# Identity ASG
-resource "aws_autoscaling_group" "identity" {
-  name_prefix         = "${var.project_name}-identity-asg-"
-  vpc_zone_identifier = var.backend_private_subnets # Private Subnets 1a/1b
-  target_group_arns   = [aws_lb_target_group.identity.arn]
-  desired_capacity    = 2
-  min_size            = 2
-  max_size            = 4
+# ASG 2: Backend (Monolithic — runs both Identity :3001 and Commerce :3002)
+# Registered to BOTH target groups so the ALB can route by path to each port.
+resource "aws_autoscaling_group" "backend" {
+  name_prefix         = "${var.project_name}-backend-asg-"
+  vpc_zone_identifier = var.backend_private_subnets
+  target_group_arns   = [
+    aws_lb_target_group.identity.arn, # ALB routes /api/auth/* and /api/users/* here
+    aws_lb_target_group.commerce.arn, # ALB routes /api/products/* and /api/orders/* here
+  ]
+  desired_capacity    = 1 # Testing: 1 instance. Change to 2 for production.
+  min_size            = 1
+  max_size            = 1 # Set to 4 in production.
 
   launch_template {
-    id      = aws_launch_template.identity.id
+    id      = aws_launch_template.backend.id
     version = "$Latest"
   }
 
@@ -404,32 +398,17 @@ resource "aws_autoscaling_group" "identity" {
       min_healthy_percentage = 50
     }
   }
-}
 
-# Commerce ASG
-resource "aws_autoscaling_group" "commerce" {
-  name_prefix         = "${var.project_name}-commerce-asg-"
-  vpc_zone_identifier = var.backend_private_subnets # Private Subnets 1a/1b
-  target_group_arns   = [aws_lb_target_group.commerce.arn]
-  desired_capacity    = 2
-  min_size            = 2
-  max_size            = 4
-
-  launch_template {
-    id      = aws_launch_template.commerce.id
-    version = "$Latest"
-  }
-
-  instance_refresh {
-    strategy = "Rolling"
-    preferences {
-      min_healthy_percentage = 50
-    }
+  tag {
+    key                 = "Name"
+    value               = "${var.project_name}-backend-asg"
+    propagate_at_launch = false
   }
 }
 
 # -----------------------------------------------------------------------------
 # Auto Scaling Target Tracking Policies (CPU Utilization > 70%)
+# Disabled at min/max=1. These activate automatically when max is raised.
 # -----------------------------------------------------------------------------
 
 resource "aws_autoscaling_policy" "frontend_cpu" {
@@ -445,22 +424,9 @@ resource "aws_autoscaling_policy" "frontend_cpu" {
   }
 }
 
-resource "aws_autoscaling_policy" "identity_cpu" {
-  name                   = "${var.project_name}-identity-cpu-policy"
-  autoscaling_group_name = aws_autoscaling_group.identity.name
-  policy_type            = "TargetTrackingScaling"
-
-  target_tracking_configuration {
-    predefined_metric_specification {
-      predefined_metric_type = "ASGAverageCPUUtilization"
-    }
-    target_value = 70.0
-  }
-}
-
-resource "aws_autoscaling_policy" "commerce_cpu" {
-  name                   = "${var.project_name}-commerce-cpu-policy"
-  autoscaling_group_name = aws_autoscaling_group.commerce.name
+resource "aws_autoscaling_policy" "backend_cpu" {
+  name                   = "${var.project_name}-backend-cpu-policy"
+  autoscaling_group_name = aws_autoscaling_group.backend.name
   policy_type            = "TargetTrackingScaling"
 
   target_tracking_configuration {
