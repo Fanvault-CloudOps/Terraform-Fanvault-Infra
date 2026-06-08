@@ -201,7 +201,7 @@ resource "aws_lb_listener_rule" "auth_path" {
 
   condition {
     path_pattern {
-      values = ["/api/auth/*"]
+      values = ["/api/auth*"]
     }
   }
 }
@@ -218,7 +218,7 @@ resource "aws_lb_listener_rule" "users_path" {
 
   condition {
     path_pattern {
-      values = ["/api/users/*"]
+      values = ["/api/users*"]
     }
   }
 }
@@ -235,7 +235,7 @@ resource "aws_lb_listener_rule" "products_path" {
 
   condition {
     path_pattern {
-      values = ["/api/products/*"]
+      values = ["/api/products*"]
     }
   }
 }
@@ -252,7 +252,7 @@ resource "aws_lb_listener_rule" "orders_path" {
 
   condition {
     path_pattern {
-      values = ["/api/orders/*"]
+      values = ["/api/orders*"]
     }
   }
 }
