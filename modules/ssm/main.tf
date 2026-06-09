@@ -252,3 +252,64 @@ resource "aws_ssm_parameter" "eventbridge_bus_name" {
   }
 }
 
+# ── /fanvault/sns/topic_low_inventory ────────────────────────────────────────
+resource "aws_ssm_parameter" "sns_topic_low_inventory" {
+  name        = "/fanvault/sns/topic_low_inventory"
+  type        = "String"
+  value       = var.sns_topic_low_inventory
+  description = "ARN of the Low Inventory Alerts SNS topic"
+
+  tags = {
+    Name        = "fanvault-sns-topic-low-inventory"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}
+
+# ── /fanvault/sns/topic_order_failure ────────────────────────────────────────
+resource "aws_ssm_parameter" "sns_topic_order_failure" {
+  name        = "/fanvault/sns/topic_order_failure"
+  type        = "String"
+  value       = var.sns_topic_order_failure
+  description = "ARN of the Order Failure Alerts SNS topic"
+
+  tags = {
+    Name        = "fanvault-sns-topic-order-failure"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}
+
+# ── /fanvault/sns/topic_product_upload_failure ───────────────────────────────
+resource "aws_ssm_parameter" "sns_topic_product_upload_failure" {
+  name        = "/fanvault/sns/topic_product_upload_failure"
+  type        = "String"
+  value       = var.sns_topic_product_upload_failure
+  description = "ARN of the Product Upload Failures SNS topic"
+
+  tags = {
+    Name        = "fanvault-sns-topic-product-upload-failure"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}
+
+# ── /fanvault/sns/topic_admin_operational_alert ──────────────────────────────
+resource "aws_ssm_parameter" "sns_topic_admin_operational_alert" {
+  name        = "/fanvault/sns/topic_admin_operational_alert"
+  type        = "String"
+  value       = var.sns_topic_admin_operational_alert
+  description = "ARN of the Admin Operational Alerts SNS topic"
+
+  tags = {
+    Name        = "fanvault-sns-topic-admin-operational-alert"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}
+
+

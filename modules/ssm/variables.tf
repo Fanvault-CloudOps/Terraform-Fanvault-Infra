@@ -106,3 +106,28 @@ variable "eventbridge_bus_name" {
   default     = "fanvault-event-bus"
 }
 
+variable "sns_topic_low_inventory" {
+  type        = string
+  description = "ARN of the Low Inventory alerts SNS topic"
+  default     = ""
+}
+
+variable "sns_topic_order_failure" {
+  type        = string
+  description = "ARN of the Order Failure alerts SNS topic"
+  default     = ""
+}
+
+variable "sns_topic_product_upload_failure" {
+  type        = string
+  description = "ARN of the Product Upload failures SNS topic"
+  default     = ""
+}
+
+variable "sns_topic_admin_operational_alert" {
+  type        = string
+  description = "ARN of the Admin Operational alerts SNS topic"
+  default     = ""
+}
+
+

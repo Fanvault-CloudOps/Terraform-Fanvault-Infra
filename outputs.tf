@@ -23,6 +23,27 @@ output "event_dlq_name" {
   description = "Name of the SQS Dead-Letter Queue"
 }
 
+output "sns_topic_low_inventory_arn" {
+  value       = module.sns.sns_topic_low_inventory_arn
+  description = "ARN of the Low Inventory Alerts SNS topic"
+}
+
+output "sns_topic_order_failure_arn" {
+  value       = module.sns.sns_topic_order_failure_arn
+  description = "ARN of the Order Failure Alerts SNS topic"
+}
+
+output "sns_topic_product_upload_failure_arn" {
+  value       = module.sns.sns_topic_product_upload_failure_arn
+  description = "ARN of the Product Upload Failures SNS topic"
+}
+
+output "sns_topic_admin_operational_alert_arn" {
+  value       = module.sns.sns_topic_admin_operational_alert_arn
+  description = "ARN of the Admin Operational Alerts SNS topic"
+}
+
+
 
 
 

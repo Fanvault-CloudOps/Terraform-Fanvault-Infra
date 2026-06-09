@@ -20,6 +20,14 @@ module "security" {
   environment  = var.environment
 }
 
+# 2.5 SNS Module
+module "sns" {
+  source       = "./modules/sns"
+  project_name = var.project_name
+  environment  = var.environment
+  alert_email  = var.alert_email
+}
+
 # 3. IAM Module
 # Creates:
 #   - Lambda execution role (S3 read for architecture page)
@@ -41,6 +49,17 @@ module "iam" {
     module.dynamodb.table_metadata_arn,
   ]
 
+  # SNS topic ARNs for publishing permissions
+  sns_topic_arns = [
+    module.sns.sns_topic_low_inventory_arn,
+    module.sns.sns_topic_order_failure_arn,
+    module.sns.sns_topic_product_upload_failure_arn,
+    module.sns.sns_topic_admin_operational_alert_arn,
+  ]
+
+  # SNS KMS key ARN for decryption/encryption permissions
+  sns_kms_key_arn = module.sns.sns_key_arn
+
   # SSM path prefix — IAM policy grants GetParameter on /fanvault/* only
   ssm_parameter_prefix = "/fanvault"
 
@@ -48,7 +67,7 @@ module "iam" {
   # Policy becomes: arn:aws:s3:::fanvault-*/* — covers any bucket created by this project
   s3_bucket_name_prefix = var.project_name
 
-  depends_on = [module.dynamodb]
+  depends_on = [module.dynamodb, module.sns]
 }
 
 # 4. DynamoDB Module (Users, Profiles, Products, Orders — replaces MongoDB)
@@ -94,7 +113,13 @@ module "ssm" {
   # EventBridge bus name
   eventbridge_bus_name = module.event_driven.event_bus_name
 
-  depends_on = [module.dynamodb, module.s3_lambda, module.event_driven]
+  # SNS Topic ARNs
+  sns_topic_low_inventory           = module.sns.sns_topic_low_inventory_arn
+  sns_topic_order_failure           = module.sns.sns_topic_order_failure_arn
+  sns_topic_product_upload_failure   = module.sns.sns_topic_product_upload_failure_arn
+  sns_topic_admin_operational_alert = module.sns.sns_topic_admin_operational_alert_arn
+
+  depends_on = [module.dynamodb, module.s3_lambda, module.event_driven, module.sns]
 }
 
 # 6. S3 & Lambda Module
@@ -118,7 +143,13 @@ module "event_driven" {
   dynamodb_table_products_name   = module.dynamodb.table_products_name
   s3_bucket_product_images_arn   = module.s3_lambda.s3_product_images_bucket_arn
   s3_bucket_product_images_name  = module.s3_lambda.s3_bucket_name
+
+  # SNS integration
+  sns_topic_low_inventory_arn          = module.sns.sns_topic_low_inventory_arn
+  sns_topic_product_upload_failure_arn = module.sns.sns_topic_product_upload_failure_arn
+  sns_key_arn                          = module.sns.sns_key_arn
 }
+
 
 
 

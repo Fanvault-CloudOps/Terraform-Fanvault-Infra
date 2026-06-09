@@ -79,6 +79,12 @@ EB_BUS_NAME=$(ssm_get "/fanvault/eventbridge/bus_name"           "fanvault-event
 S3_BUCKET=$(ssm_get "/fanvault/s3/bucket"                "fanvault-architecture")
 S3_REGION=$(ssm_get "/fanvault/s3/region"                "$AWS_REGION")
 
+# SNS Topic ARNs
+SNS_LOW_INVENTORY=$(ssm_get "/fanvault/sns/topic_low_inventory" "")
+SNS_ORDER_FAILURE=$(ssm_get "/fanvault/sns/topic_order_failure" "")
+SNS_PRODUCT_UPLOAD=$(ssm_get "/fanvault/sns/topic_product_upload_failure" "")
+SNS_ADMIN_OPERATIONAL=$(ssm_get "/fanvault/sns/topic_admin_operational_alert" "")
+
 echo "  Repo    : $GIT_REPO  (branch: $GIT_BRANCH)"
 echo "  DDB     : users=$TABLE_USERS | profiles=$TABLE_PROFILES"
 echo "  DDB     : products=$TABLE_PRODUCTS | orders=$TABLE_ORDERS"
@@ -138,6 +144,12 @@ DYNAMODB_TABLE_ORDERS=${TABLE_ORDERS}
 DYNAMODB_TABLE_AUDIT_LOGS=${TABLE_AUDIT_LOGS}
 DYNAMODB_TABLE_METADATA=${TABLE_METADATA}
 EVENTBRIDGE_BUS_NAME=${EB_BUS_NAME}
+
+# SNS Topic ARNs
+SNS_TOPIC_LOW_INVENTORY=${SNS_LOW_INVENTORY}
+SNS_TOPIC_ORDER_FAILURE=${SNS_ORDER_FAILURE}
+SNS_TOPIC_PRODUCT_UPLOAD_FAILURE=${SNS_PRODUCT_UPLOAD}
+SNS_TOPIC_ADMIN_OPERATIONAL_ALERT=${SNS_ADMIN_OPERATIONAL}
 
 # JWT (must match identity service — verification only, no signing here)
 JWT_SECRET=${JWT_SECRET}

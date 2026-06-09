@@ -114,6 +114,29 @@ resource "aws_iam_role_policy" "lambda_resources" {
           var.s3_bucket_product_images_arn,
           "${var.s3_bucket_product_images_arn}/*"
         ]
+      },
+      {
+        Sid    = "SNSPublishAccess"
+        Effect = "Allow"
+        Action = [
+          "sns:Publish"
+        ]
+        Resource = [
+          var.sns_topic_low_inventory_arn,
+          var.sns_topic_product_upload_failure_arn
+        ]
+      },
+      {
+        Sid    = "KMSDecryptSNS"
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = [
+          var.sns_key_arn
+        ]
       }
     ]
   })
@@ -221,13 +244,46 @@ data "archive_file" "thumbnail_generator" {
 const { S3Client, GetObjectCommand, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { DynamoDBDocumentClient, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
+const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
 
 const s3 = new S3Client({});
 const dynamo = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dynamo);
+const sns = new SNSClient({});
 
 const BUCKET = process.env.S3_BUCKET_NAME;
 const PRODUCTS_TABLE = process.env.DYNAMODB_TABLE_PRODUCTS;
+const SNS_TOPIC_ARN = process.env.SNS_TOPIC_ARN;
+
+async function publishFailure(productId, errorMsg, originalKey, correlationId) {
+  if (!SNS_TOPIC_ARN) {
+    console.error("SNS_TOPIC_ARN not configured.");
+    return;
+  }
+  const payload = {
+    service: "thumbnail-generator-lambda",
+    eventType: "ProductUploadFailure",
+    resource: `Product:$${productId || "unknown"}`,
+    timestamp: new Date().toISOString(),
+    severity: "ERROR",
+    correlationId,
+    details: {
+      productId,
+      imageKey: originalKey,
+      errorMessage: errorMsg
+    }
+  };
+  try {
+    await sns.send(new PublishCommand({
+      TopicArn: SNS_TOPIC_ARN,
+      Message: JSON.stringify(payload, null, 2),
+      Subject: `Product Upload Failure Alert: Product $${productId || "unknown"}`
+    }));
+    console.log("Upload failure alert sent to SNS.");
+  } catch (err) {
+    console.error("Failed to send upload failure alert to SNS:", err.message);
+  }
+}
 
 exports.handler = async (event) => {
   console.log("Received EventBridge event:", JSON.stringify(event, null, 2));
@@ -235,6 +291,7 @@ exports.handler = async (event) => {
   const detail = event.detail || {};
   const productId = detail.productId;
   const images = detail.images || (detail.changes && detail.changes.images) || [];
+  const correlationId = detail.correlationId || event.id || "system";
 
   if (!productId || images.length === 0) {
     console.log("No productId or images found. Skipping thumbnail generation.");
@@ -274,6 +331,7 @@ exports.handler = async (event) => {
         console.log(`Successfully generated thumbnail: $${thumbnailKey}`);
       } catch (err) {
         console.error(`Error processing image $${imgKey}:`, err.message);
+        await publishFailure(productId, err.message, imgKey, correlationId);
         throw err;
       }
     } else {
@@ -298,6 +356,7 @@ exports.handler = async (event) => {
       console.log(`Successfully updated product $${productId} database record.`);
     } catch (err) {
       console.error(`Failed to update product $${productId} record:`, err.message);
+      await publishFailure(productId, err.message, "db_update_failure", correlationId);
       throw err;
     }
   }
@@ -321,6 +380,7 @@ resource "aws_lambda_function" "thumbnail_generator" {
     variables = {
       S3_BUCKET_NAME          = var.s3_bucket_product_images_name
       DYNAMODB_TABLE_PRODUCTS = var.dynamodb_table_products_name
+      SNS_TOPIC_ARN           = var.sns_topic_product_upload_failure_arn
     }
   }
 
@@ -329,6 +389,7 @@ resource "aws_lambda_function" "thumbnail_generator" {
     Environment = var.environment
   }
 }
+
 
 # -----------------------------------------------------------------------------
 # Lambda 3: Inventory Monitoring Consumer
@@ -339,6 +400,9 @@ data "archive_file" "inventory_monitor" {
   source {
     filename = "index.js"
     content  = <<EOF
+const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
+const sns = new SNSClient({});
+
 exports.handler = async (event) => {
   console.log("Received EventBridge event:", JSON.stringify(event, null, 2));
 
@@ -347,6 +411,7 @@ exports.handler = async (event) => {
   const productName = detail.name || "unknown";
   const sku = detail.sku || "unknown";
   const stock = detail.stock ?? "unknown";
+  const correlationId = detail.correlationId || event.id || "system";
 
   console.warn(`[ALERT] INVENTORY MONITOR WARNING: Product stock is critically low!`);
   console.warn(`[ALERT] Product Details:
@@ -356,8 +421,40 @@ exports.handler = async (event) => {
     - Current Stock: $${stock}
     - Alert Timestamp: $${detail.timestamp || new Date().toISOString()}
   `);
-  
-  return { status: "success", alertSent: true };
+
+  const topicArn = process.env.SNS_TOPIC_ARN;
+  if (!topicArn) {
+    console.error("SNS_TOPIC_ARN environment variable not configured.");
+    return { status: "skipped", reason: "no_topic_arn" };
+  }
+
+  const payload = {
+    service: "fanvault-commerce-service",
+    eventType: "LowInventoryAlert",
+    resource: `Product:$${productId}`,
+    timestamp: detail.timestamp || new Date().toISOString(),
+    severity: "WARNING",
+    correlationId,
+    details: {
+      productId,
+      productName,
+      sku,
+      currentStock: stock
+    }
+  };
+
+  try {
+    const response = await sns.send(new PublishCommand({
+      TopicArn: topicArn,
+      Message: JSON.stringify(payload, null, 2),
+      Subject: `Low Inventory Alert: $${productName} ($${sku})`
+    }));
+    console.log("Alert published to SNS successfully. MessageId:", response.MessageId);
+    return { status: "success", alertSent: true, messageId: response.MessageId };
+  } catch (err) {
+    console.error("Failed to publish alert to SNS:", err.message);
+    throw err;
+  }
 };
 EOF
   }
@@ -371,6 +468,12 @@ resource "aws_lambda_function" "inventory_monitor" {
   runtime          = "nodejs20.x"
   source_code_hash = data.archive_file.inventory_monitor.output_base64sha256
   timeout          = 15
+
+  environment {
+    variables = {
+      SNS_TOPIC_ARN = var.sns_topic_low_inventory_arn
+    }
+  }
 
   tags = {
     Name        = "${var.project_name}-inventory-monitor-consumer"
@@ -488,3 +591,32 @@ resource "aws_lambda_permission" "inventory_monitor" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.inventory_monitor.arn
 }
+
+# Rule 4: Route InventoryLow events directly to SNS Low Inventory Alerts topic
+resource "aws_cloudwatch_event_rule" "low_inventory_sns" {
+  name           = "${var.project_name}-low-inventory-sns-rule"
+  description    = "Route InventoryLow events directly to SNS Low Inventory Alerts topic"
+  event_bus_name = aws_cloudwatch_event_bus.commerce_bus.name
+
+  event_pattern = jsonencode({
+    source      = ["fanvault.commerce"]
+    detail-type = ["InventoryLow"]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "low_inventory_sns" {
+  rule           = aws_cloudwatch_event_rule.low_inventory_sns.name
+  event_bus_name = aws_cloudwatch_event_bus.commerce_bus.name
+  target_id      = "LowInventorySNSTarget"
+  arn            = var.sns_topic_low_inventory_arn
+
+  retry_policy {
+    maximum_event_age_in_seconds = 3600
+    maximum_retry_attempts       = 3
+  }
+
+  dead_letter_config {
+    arn = aws_sqs_queue.event_dlq.arn
+  }
+}
+

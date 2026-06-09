@@ -40,3 +40,16 @@ variable "github_repo" {
   default     = "Savitxr/Fanvault-v2"
 }
 
+variable "sns_topic_arns" {
+  type        = list(string)
+  description = "ARNs of the SNS topics for operational notifications"
+  default     = []
+}
+
+variable "sns_kms_key_arn" {
+  type        = string
+  description = "ARN of the KMS key used for encrypting SNS topics"
+  default     = ""
+}
+
+

@@ -58,3 +58,10 @@ variable "github_repo" {
   default     = "Savitxr/Fanvault-v2"
 }
 
+variable "alert_email" {
+  type        = string
+  description = "Optional email address to subscribe to SNS operational alerts"
+  default     = ""
+}
+
+

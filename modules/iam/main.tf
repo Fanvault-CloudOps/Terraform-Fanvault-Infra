@@ -343,4 +343,32 @@ data "aws_iam_policy_document" "backend_eventbridge" {
   }
 }
 
+# Grant SNS publishing and KMS decryption permissions to the backend EC2 role
+resource "aws_iam_role_policy" "backend_sns" {
+  name   = "${var.project_name}-backend-sns-policy"
+  role   = aws_iam_role.ec2_backend.id
+  policy = data.aws_iam_policy_document.backend_sns.json
+}
+
+data "aws_iam_policy_document" "backend_sns" {
+  statement {
+    sid       = "SNSPublishAlerts"
+    effect    = "Allow"
+    actions   = ["sns:Publish"]
+    resources = var.sns_topic_arns
+  }
+
+  statement {
+    sid    = "KMSDecryptSNS"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = [var.sns_kms_key_arn]
+  }
+}
+
+
 
