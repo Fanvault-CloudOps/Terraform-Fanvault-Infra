@@ -52,4 +52,32 @@ variable "sns_kms_key_arn" {
   default     = ""
 }
 
+variable "dynamodb_table_audit_logs_arn" {
+  type        = string
+  description = "ARN of the fanvault-audit-logs DynamoDB table"
+}
+
+variable "dynamodb_table_products_arn" {
+  type        = string
+  description = "ARN of the fanvault-products DynamoDB table"
+}
+
+variable "s3_bucket_product_images_arn" {
+  type        = string
+  description = "ARN of the S3 bucket for product images"
+}
+
+variable "sns_topic_low_inventory_arn" {
+  type        = string
+  description = "ARN of the Low Inventory Alerts SNS topic"
+  default     = ""
+}
+
+variable "sns_topic_product_upload_failure_arn" {
+  type        = string
+  description = "ARN of the Product Upload Failures SNS topic"
+  default     = ""
+}
+
+
 

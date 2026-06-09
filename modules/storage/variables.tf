@@ -1,5 +1,5 @@
 # =============================================================================
-# DynamoDB Module — Variables
+# Storage Module — Variables
 # =============================================================================
 
 variable "project_name" {
@@ -29,4 +29,14 @@ variable "enable_encryption" {
   type        = bool
   description = "Enable server-side encryption using AWS-owned KMS key"
   default     = true
+}
+
+variable "lambda_role_arn" {
+  type        = string
+  description = "The ARN of the IAM execution role for Lambda"
+}
+
+variable "cors_origin" {
+  type        = string
+  description = "Allowed CORS origin for both backend services"
 }

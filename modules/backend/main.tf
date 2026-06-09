@@ -22,11 +22,11 @@ data "aws_ami" "ubuntu" {
 
 # Public Bastion Host
 resource "aws_instance" "bastion" {
-  ami                     = data.aws_ami.ubuntu.id
-  instance_type           = "t3.micro"
-  key_name                = var.key_name
-  subnet_id               = var.public_subnets[0] # Place in public-1a
-  vpc_security_group_ids  = [var.bastion_sg_id]
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = "t3.micro"
+  key_name               = var.key_name
+  subnet_id              = var.public_subnets[0] # Place in public-1a
+  vpc_security_group_ids = [var.bastion_sg_id]
 
   metadata_options {
     http_endpoint               = "enabled"
@@ -62,9 +62,9 @@ resource "aws_lb" "main" {
 # Target Group 1: Nginx Frontend
 resource "aws_lb_target_group" "frontend" {
   name     = "${var.project_name}-frontend-tg"
-  port             = 80
-  protocol         = "HTTP"
-  vpc_id           = var.vpc_id
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
 
   health_check {
     path                = "/index.html"
@@ -303,7 +303,7 @@ resource "aws_launch_template" "frontend" {
   }
 
   # user_data installs Nginx, deploys the compiled SPA, and starts Nginx
-  user_data = base64encode(file("${path.module}/../../scripts/user_data_frontend.sh"))
+  user_data = base64encode(file("${path.module}/user_data/user_data_frontend.sh"))
 
   network_interfaces {
     associate_public_ip_address = false
@@ -339,7 +339,7 @@ resource "aws_launch_template" "backend" {
   }
 
   # user_data installs Node.js 20, deploys both services, starts them via PM2
-  user_data = base64encode(file("${path.module}/../../scripts/user_data_backend.sh"))
+  user_data = base64encode(file("${path.module}/user_data/user_data_backend.sh"))
 
   network_interfaces {
     associate_public_ip_address = false
@@ -392,13 +392,13 @@ resource "aws_autoscaling_group" "frontend" {
 resource "aws_autoscaling_group" "backend" {
   name_prefix         = "${var.project_name}-backend-asg-"
   vpc_zone_identifier = var.backend_private_subnets
-  target_group_arns   = [
+  target_group_arns = [
     aws_lb_target_group.identity.arn, # ALB routes /api/auth/* and /api/users/* here
     aws_lb_target_group.commerce.arn, # ALB routes /api/products/* and /api/orders/* here
   ]
-  desired_capacity    = 1 # Testing: 1 instance. Change to 2 for production.
-  min_size            = 1
-  max_size            = 1 # Set to 4 in production.
+  desired_capacity = 1 # Testing: 1 instance. Change to 2 for production.
+  min_size         = 1
+  max_size         = 1 # Set to 4 in production.
 
   launch_template {
     id      = aws_launch_template.backend.id

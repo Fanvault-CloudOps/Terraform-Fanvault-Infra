@@ -61,3 +61,9 @@ variable "sns_key_arn" {
   default     = ""
 }
 
+variable "lambda_role_arn" {
+  type        = string
+  description = "ARN of the IAM role for the Lambda consumers"
+}
+
+

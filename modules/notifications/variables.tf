@@ -13,3 +13,9 @@ variable "alert_email" {
   description = "Email address for direct operational alerts subscription (optional)"
   default     = ""
 }
+
+variable "sns_feedback_role_arn" {
+  type        = string
+  description = "ARN of the IAM role used for SNS CloudWatch logging feedback"
+}
+

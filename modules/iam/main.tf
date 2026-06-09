@@ -107,9 +107,9 @@ data "aws_iam_policy_document" "backend_ssm" {
 
   # Allow KMS Decrypt for SecureString parameters
   statement {
-    sid    = "KMSDecryptSSM"
-    effect = "Allow"
-    actions = ["kms:Decrypt"]
+    sid       = "KMSDecryptSSM"
+    effect    = "Allow"
+    actions   = ["kms:Decrypt"]
     resources = ["arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:alias/aws/ssm"]
   }
 }
@@ -117,9 +117,9 @@ data "aws_iam_policy_document" "backend_ssm" {
 # ── Inline policy: S3 + KMS access on the product images bucket ──────────────────
 data "aws_iam_policy_document" "backend_s3" {
   statement {
-    sid       = "S3ProductImageAccess"
-    effect    = "Allow"
-    actions   = [
+    sid    = "S3ProductImageAccess"
+    effect = "Allow"
+    actions = [
       "s3:GetObject",
       "s3:PutObject"
     ]
@@ -130,9 +130,9 @@ data "aws_iam_policy_document" "backend_s3" {
   }
 
   statement {
-    sid       = "KMSProductImageAccess"
-    effect    = "Allow"
-    actions   = [
+    sid    = "KMSProductImageAccess"
+    effect = "Allow"
+    actions = [
       "kms:Decrypt",
       "kms:GenerateDataKey",
       "kms:DescribeKey"

@@ -40,3 +40,15 @@ output "github_actions_role_arn" {
   description = "ARN of the IAM role assumed by GitHub Actions via OIDC"
 }
 
+output "lambda_consumers_role_arn" {
+  value       = aws_iam_role.lambda_consumers.arn
+  description = "ARN of the Lambda consumers execution role"
+}
+
+output "sns_feedback_role_arn" {
+  value       = aws_iam_role.sns_feedback_role.arn
+  description = "ARN of the SNS CloudWatch feedback execution role"
+}
+
+
+

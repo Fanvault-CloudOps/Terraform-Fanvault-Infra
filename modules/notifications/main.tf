@@ -76,52 +76,7 @@ data "aws_iam_policy_document" "sns_kms_policy" {
   }
 }
 
-# -----------------------------------------------------------------------------
-# IAM Role for SNS CloudWatch Delivery Logging Feedback
-# -----------------------------------------------------------------------------
-resource "aws_iam_role" "sns_feedback_role" {
-  name = "${var.project_name}-sns-feedback-role"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "sns.amazonaws.com"
-        }
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-
-  tags = {
-    Name        = "${var.project_name}-sns-feedback-role"
-    Environment = var.environment
-  }
-}
-
-resource "aws_iam_role_policy" "sns_feedback_policy" {
-  name = "${var.project_name}-sns-feedback-policy"
-  role = aws_iam_role.sns_feedback_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:DescribeLogGroups",
-          "logs:DescribeLogStreams"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
 
 # -----------------------------------------------------------------------------
 # SQS Dead-Letter Queue for SNS Subscription Failures
@@ -145,8 +100,8 @@ resource "aws_sqs_queue_policy" "sns_dlq_policy" {
 
 data "aws_iam_policy_document" "sns_dlq_policy_doc" {
   statement {
-    effect  = "Allow"
-    actions = ["sqs:SendMessage"]
+    effect    = "Allow"
+    actions   = ["sqs:SendMessage"]
     resources = [aws_sqs_queue.sns_dlq.arn]
 
     principals {
@@ -163,12 +118,12 @@ resource "aws_sns_topic" "low_inventory" {
   name              = "${var.project_name}-low-inventory-alerts"
   kms_master_key_id = aws_kms_key.sns_key.id
 
-  sqs_success_feedback_role_arn      = aws_iam_role.sns_feedback_role.arn
-  sqs_failure_feedback_role_arn      = aws_iam_role.sns_feedback_role.arn
-  lambda_success_feedback_role_arn  = aws_iam_role.sns_feedback_role.arn
-  lambda_failure_feedback_role_arn  = aws_iam_role.sns_feedback_role.arn
+  sqs_success_feedback_role_arn       = var.sns_feedback_role_arn
+  sqs_failure_feedback_role_arn       = var.sns_feedback_role_arn
+  lambda_success_feedback_role_arn    = var.sns_feedback_role_arn
+  lambda_failure_feedback_role_arn    = var.sns_feedback_role_arn
   sqs_success_feedback_sample_rate    = 100
-  lambda_success_feedback_sample_rate  = 100
+  lambda_success_feedback_sample_rate = 100
 
   tags = {
     Name        = "${var.project_name}-low-inventory-alerts"
@@ -180,12 +135,12 @@ resource "aws_sns_topic" "order_failure" {
   name              = "${var.project_name}-order-failure-alerts"
   kms_master_key_id = aws_kms_key.sns_key.id
 
-  sqs_success_feedback_role_arn      = aws_iam_role.sns_feedback_role.arn
-  sqs_failure_feedback_role_arn      = aws_iam_role.sns_feedback_role.arn
-  lambda_success_feedback_role_arn  = aws_iam_role.sns_feedback_role.arn
-  lambda_failure_feedback_role_arn  = aws_iam_role.sns_feedback_role.arn
+  sqs_success_feedback_role_arn       = var.sns_feedback_role_arn
+  sqs_failure_feedback_role_arn       = var.sns_feedback_role_arn
+  lambda_success_feedback_role_arn    = var.sns_feedback_role_arn
+  lambda_failure_feedback_role_arn    = var.sns_feedback_role_arn
   sqs_success_feedback_sample_rate    = 100
-  lambda_success_feedback_sample_rate  = 100
+  lambda_success_feedback_sample_rate = 100
 
   tags = {
     Name        = "${var.project_name}-order-failure-alerts"
@@ -197,12 +152,12 @@ resource "aws_sns_topic" "product_upload" {
   name              = "${var.project_name}-product-upload-failures"
   kms_master_key_id = aws_kms_key.sns_key.id
 
-  sqs_success_feedback_role_arn      = aws_iam_role.sns_feedback_role.arn
-  sqs_failure_feedback_role_arn      = aws_iam_role.sns_feedback_role.arn
-  lambda_success_feedback_role_arn  = aws_iam_role.sns_feedback_role.arn
-  lambda_failure_feedback_role_arn  = aws_iam_role.sns_feedback_role.arn
+  sqs_success_feedback_role_arn       = var.sns_feedback_role_arn
+  sqs_failure_feedback_role_arn       = var.sns_feedback_role_arn
+  lambda_success_feedback_role_arn    = var.sns_feedback_role_arn
+  lambda_failure_feedback_role_arn    = var.sns_feedback_role_arn
   sqs_success_feedback_sample_rate    = 100
-  lambda_success_feedback_sample_rate  = 100
+  lambda_success_feedback_sample_rate = 100
 
   tags = {
     Name        = "${var.project_name}-product-upload-failures"
@@ -214,12 +169,12 @@ resource "aws_sns_topic" "admin_operational" {
   name              = "${var.project_name}-admin-operational-alerts"
   kms_master_key_id = aws_kms_key.sns_key.id
 
-  sqs_success_feedback_role_arn      = aws_iam_role.sns_feedback_role.arn
-  sqs_failure_feedback_role_arn      = aws_iam_role.sns_feedback_role.arn
-  lambda_success_feedback_role_arn  = aws_iam_role.sns_feedback_role.arn
-  lambda_failure_feedback_role_arn  = aws_iam_role.sns_feedback_role.arn
+  sqs_success_feedback_role_arn       = var.sns_feedback_role_arn
+  sqs_failure_feedback_role_arn       = var.sns_feedback_role_arn
+  lambda_success_feedback_role_arn    = var.sns_feedback_role_arn
+  lambda_failure_feedback_role_arn    = var.sns_feedback_role_arn
   sqs_success_feedback_sample_rate    = 100
-  lambda_success_feedback_sample_rate  = 100
+  lambda_success_feedback_sample_rate = 100
 
   tags = {
     Name        = "${var.project_name}-admin-operational-alerts"
