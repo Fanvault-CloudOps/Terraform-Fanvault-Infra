@@ -14,6 +14,11 @@ output "s3_bucket_arn" {
 }
 
 output "s3_bucket_name" {
-  value       = aws_s3_bucket.architecture.id
-  description = "Name of the private S3 bucket (stored in SSM /fanvault/s3/bucket)"
+  value       = aws_s3_bucket.product_images.id
+  description = "Name of the private S3 product images bucket (stored in SSM /fanvault/s3/bucket)"
+}
+
+output "cloudfront_domain_name" {
+  value       = aws_cloudfront_distribution.product_images_distribution.domain_name
+  description = "The domain name of the CloudFront distribution for product images"
 }

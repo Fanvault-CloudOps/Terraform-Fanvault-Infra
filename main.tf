@@ -30,12 +30,14 @@ module "iam" {
   project_name = var.project_name
   environment  = var.environment
 
-  # Scope DynamoDB permissions to the exact 4 table ARNs (least privilege)
+  # Scope DynamoDB permissions to all FanVault table ARNs (least privilege)
   dynamodb_table_arns = [
     module.dynamodb.table_users_arn,
     module.dynamodb.table_profiles_arn,
     module.dynamodb.table_products_arn,
     module.dynamodb.table_orders_arn,
+    module.dynamodb.table_audit_logs_arn,
+    module.dynamodb.table_metadata_arn,
   ]
 
   # SSM path prefix — IAM policy grants GetParameter on /fanvault/* only
@@ -80,10 +82,13 @@ module "ssm" {
   dynamodb_table_users    = module.dynamodb.table_users_name
   dynamodb_table_profiles = module.dynamodb.table_profiles_name
   dynamodb_table_products = module.dynamodb.table_products_name
-  dynamodb_table_orders   = module.dynamodb.table_orders_name
+  dynamodb_table_orders     = module.dynamodb.table_orders_name
+  dynamodb_table_audit_logs = module.dynamodb.table_audit_logs_name
+  dynamodb_table_metadata   = module.dynamodb.table_metadata_name
 
   # S3 bucket name (sourced from s3_lambda module output)
-  s3_bucket_name = module.s3_lambda.s3_bucket_name
+  s3_bucket_name    = module.s3_lambda.s3_bucket_name
+  s3_cloudfront_url = module.s3_lambda.cloudfront_domain_name
 
   depends_on = [module.dynamodb, module.s3_lambda]
 }
@@ -94,6 +99,7 @@ module "s3_lambda" {
   lambda_role_arn = module.iam.lambda_role_arn
   project_name    = var.project_name
   environment     = var.environment
+  cors_origin     = var.cors_origin
 }
 
 

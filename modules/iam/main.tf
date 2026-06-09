@@ -114,16 +114,30 @@ data "aws_iam_policy_document" "backend_ssm" {
   }
 }
 
-# ── Inline policy: S3 GetObject on the product images bucket ──────────────────
+# ── Inline policy: S3 + KMS access on the product images bucket ──────────────────
 data "aws_iam_policy_document" "backend_s3" {
   statement {
-    sid       = "S3ProductImageRead"
+    sid       = "S3ProductImageAccess"
     effect    = "Allow"
-    actions   = ["s3:GetObject"]
+    actions   = [
+      "s3:GetObject",
+      "s3:PutObject"
+    ]
     # Scoped to any bucket whose name starts with the project prefix (e.g. "fanvault-*")
     # This avoids a circular dependency: s3_lambda needs lambda_role from iam,
     # so iam cannot also depend on s3_lambda for the bucket ARN.
     resources = ["arn:aws:s3:::${var.s3_bucket_name_prefix}-*/*"]
+  }
+
+  statement {
+    sid       = "KMSProductImageAccess"
+    effect    = "Allow"
+    actions   = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey",
+      "kms:DescribeKey"
+    ]
+    resources = ["*"]
   }
 }
 

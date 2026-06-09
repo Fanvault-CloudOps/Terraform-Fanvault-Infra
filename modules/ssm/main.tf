@@ -191,3 +191,48 @@ resource "aws_ssm_parameter" "s3_region" {
     ManagedBy   = "terraform"
   }
 }
+
+# ── /fanvault/s3/cloudfront_url ──────────────────────────────────────────────
+resource "aws_ssm_parameter" "s3_cloudfront_url" {
+  name        = "/fanvault/s3/cloudfront_url"
+  type        = "String"
+  value       = var.s3_cloudfront_url
+  description = "Domain name of the CloudFront distribution for S3 product images"
+
+  tags = {
+    Name        = "fanvault-s3-cloudfront-url"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}
+
+# ── /fanvault/dynamodb/table_audit_logs ──────────────────────────────────────
+resource "aws_ssm_parameter" "table_audit_logs" {
+  name        = "/fanvault/dynamodb/table_audit_logs"
+  type        = "String"
+  value       = var.dynamodb_table_audit_logs
+  description = "DynamoDB table name for admin audit logs (fanvault-commerce-service)"
+
+  tags = {
+    Name        = "fanvault-ddb-table-audit-logs"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}
+
+# ── /fanvault/dynamodb/table_metadata ────────────────────────────────────────
+resource "aws_ssm_parameter" "table_metadata" {
+  name        = "/fanvault/dynamodb/table_metadata"
+  type        = "String"
+  value       = var.dynamodb_table_metadata
+  description = "DynamoDB table name for admin category/franchise metadata (fanvault-commerce-service)"
+
+  tags = {
+    Name        = "fanvault-ddb-table-metadata"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}

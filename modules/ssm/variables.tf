@@ -81,3 +81,21 @@ variable "aws_region" {
   description = "AWS region (used as the S3 region parameter value)"
   default     = "us-east-1"
 }
+
+variable "s3_cloudfront_url" {
+  type        = string
+  description = "The domain name of the CloudFront distribution for product images"
+  default     = ""
+}
+
+variable "dynamodb_table_audit_logs" {
+  type        = string
+  description = "Name of the fanvault-audit-logs DynamoDB table"
+  default     = "fanvault-audit-logs"
+}
+
+variable "dynamodb_table_metadata" {
+  type        = string
+  description = "Name of the fanvault-metadata DynamoDB table"
+  default     = "fanvault-metadata"
+}

@@ -72,7 +72,9 @@ JWT_REFRESH_SECRET=$(ssm_get "/fanvault/app/jwt_refresh_secret" "CHANGE_ME_REFRE
 TABLE_USERS=$(ssm_get "/fanvault/dynamodb/table_users"    "fanvault-users")
 TABLE_PROFILES=$(ssm_get "/fanvault/dynamodb/table_profiles" "fanvault-profiles")
 TABLE_PRODUCTS=$(ssm_get "/fanvault/dynamodb/table_products" "fanvault-products")
-TABLE_ORDERS=$(ssm_get "/fanvault/dynamodb/table_orders"   "fanvault-orders")
+TABLE_ORDERS=$(ssm_get "/fanvault/dynamodb/table_orders"        "fanvault-orders")
+TABLE_AUDIT_LOGS=$(ssm_get "/fanvault/dynamodb/table_audit_logs" "fanvault-audit-logs")
+TABLE_METADATA=$(ssm_get "/fanvault/dynamodb/table_metadata"     "fanvault-metadata")
 S3_BUCKET=$(ssm_get "/fanvault/s3/bucket"                "fanvault-architecture")
 S3_REGION=$(ssm_get "/fanvault/s3/region"                "$AWS_REGION")
 
@@ -132,6 +134,8 @@ PORT=3002
 AWS_REGION=${AWS_REGION}
 DYNAMODB_TABLE_PRODUCTS=${TABLE_PRODUCTS}
 DYNAMODB_TABLE_ORDERS=${TABLE_ORDERS}
+DYNAMODB_TABLE_AUDIT_LOGS=${TABLE_AUDIT_LOGS}
+DYNAMODB_TABLE_METADATA=${TABLE_METADATA}
 
 # JWT (must match identity service — verification only, no signing here)
 JWT_SECRET=${JWT_SECRET}

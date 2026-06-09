@@ -41,3 +41,23 @@ output "table_orders_arn" {
   value       = aws_dynamodb_table.orders.arn
   description = "ARN of the fanvault-orders table"
 }
+
+output "table_audit_logs_name" {
+  value       = aws_dynamodb_table.audit_logs.name
+  description = "Name of the fanvault-audit-logs DynamoDB table"
+}
+
+output "table_metadata_name" {
+  value       = aws_dynamodb_table.metadata.name
+  description = "Name of the fanvault-metadata DynamoDB table"
+}
+
+output "table_audit_logs_arn" {
+  value       = aws_dynamodb_table.audit_logs.arn
+  description = "ARN of the fanvault-audit-logs table (used in IAM policies)"
+}
+
+output "table_metadata_arn" {
+  value       = aws_dynamodb_table.metadata.arn
+  description = "ARN of the fanvault-metadata table (used in IAM policies)"
+}

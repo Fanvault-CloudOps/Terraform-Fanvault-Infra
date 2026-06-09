@@ -214,3 +214,104 @@ resource "aws_dynamodb_table" "orders" {
     Service     = "fanvault-commerce-service"
   }
 }
+
+# ── Table 5: fanvault-audit-logs ─────────────────────────────────────────────
+# PK  : logId (UUID)
+# GSI : entityType-timestamp-index → browse by entity type + date
+# GSI : adminId-timestamp-index    → browse by admin user + date
+# TTL : ttlExpiry (Unix epoch seconds) — items expire after 1 day (86400s)
+resource "aws_dynamodb_table" "audit_logs" {
+  name         = "${var.project_name}-audit-logs"
+  billing_mode = var.billing_mode
+  hash_key     = "logId"
+
+  attribute {
+    name = "logId"
+    type = "S"
+  }
+
+  attribute {
+    name = "entityType"
+    type = "S"
+  }
+
+  attribute {
+    name = "adminId"
+    type = "S"
+  }
+
+  attribute {
+    name = "timestamp"
+    type = "S"
+  }
+
+  # GSI-1: entityType-timestamp-index
+  global_secondary_index {
+    name            = "entityType-timestamp-index"
+    hash_key        = "entityType"
+    range_key       = "timestamp"
+    projection_type = "ALL"
+  }
+
+  # GSI-2: adminId-timestamp-index
+  global_secondary_index {
+    name            = "adminId-timestamp-index"
+    hash_key        = "adminId"
+    range_key       = "timestamp"
+    projection_type = "ALL"
+  }
+
+  ttl {
+    attribute_name = "ttlExpiry"
+    enabled        = true
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_pitr
+  }
+
+  server_side_encryption {
+    enabled = var.enable_encryption
+  }
+
+  tags = {
+    Name        = "${var.project_name}-audit-logs"
+    Environment = var.environment
+    Service     = "fanvault-commerce-service"
+  }
+}
+
+# ── Table 6: fanvault-metadata ────────────────────────────────────────────────
+# PK  : metaType (e.g. "category" | "franchise")
+# SK  : metaId   (slug e.g. "clothing" | "mumbai-indians")
+# Admin-managed lookup table for categories and franchise metadata
+resource "aws_dynamodb_table" "metadata" {
+  name         = "${var.project_name}-metadata"
+  billing_mode = var.billing_mode
+  hash_key     = "metaType"
+  range_key    = "metaId"
+
+  attribute {
+    name = "metaType"
+    type = "S"
+  }
+
+  attribute {
+    name = "metaId"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_pitr
+  }
+
+  server_side_encryption {
+    enabled = var.enable_encryption
+  }
+
+  tags = {
+    Name        = "${var.project_name}-metadata"
+    Environment = var.environment
+    Service     = "fanvault-commerce-service"
+  }
+}

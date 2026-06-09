@@ -12,3 +12,9 @@ variable "environment" {
   type        = string
   description = "Environment name"
 }
+
+variable "cors_origin" {
+  type        = string
+  description = "Allowed CORS origin for both backend services"
+}
+
