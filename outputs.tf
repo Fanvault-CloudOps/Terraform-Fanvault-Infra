@@ -13,5 +13,16 @@ output "github_actions_role_arn" {
   description = "ARN of the IAM role assumed by GitHub Actions via OIDC"
 }
 
+output "event_bus_name" {
+  value       = module.event_driven.event_bus_name
+  description = "Name of the EventBridge custom event bus"
+}
+
+output "event_dlq_name" {
+  value       = module.event_driven.event_dlq_name
+  description = "Name of the SQS Dead-Letter Queue"
+}
+
+
 
 

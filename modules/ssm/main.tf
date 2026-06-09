@@ -236,3 +236,19 @@ resource "aws_ssm_parameter" "table_metadata" {
     ManagedBy   = "terraform"
   }
 }
+
+# ── /fanvault/eventbridge/bus_name ───────────────────────────────────────────
+resource "aws_ssm_parameter" "eventbridge_bus_name" {
+  name        = "/fanvault/eventbridge/bus_name"
+  type        = "String"
+  value       = var.eventbridge_bus_name
+  description = "Name of the EventBridge custom event bus"
+
+  tags = {
+    Name        = "fanvault-eb-bus-name"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}
+

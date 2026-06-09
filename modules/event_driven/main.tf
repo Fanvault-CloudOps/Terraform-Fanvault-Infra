@@ -1,0 +1,490 @@
+# -----------------------------------------------------------------------------
+# EventBridge Bus
+# -----------------------------------------------------------------------------
+resource "aws_cloudwatch_event_bus" "commerce_bus" {
+  name = "${var.project_name}-event-bus"
+
+  tags = {
+    Name        = "${var.project_name}-event-bus"
+    Environment = var.environment
+  }
+}
+
+# -----------------------------------------------------------------------------
+# SQS Dead-Letter Queue (DLQ) for failed EventBridge targets
+# -----------------------------------------------------------------------------
+resource "aws_sqs_queue" "event_dlq" {
+  name                      = "${var.project_name}-event-dlq"
+  message_retention_seconds = 1209600 # 14 days
+  receive_wait_time_seconds = 20
+
+  tags = {
+    Name        = "${var.project_name}-event-dlq"
+    Environment = var.environment
+  }
+}
+
+resource "aws_sqs_queue_policy" "event_dlq_policy" {
+  queue_url = aws_sqs_queue.event_dlq.id
+  policy    = data.aws_iam_policy_document.sqs_dlq_policy.json
+}
+
+data "aws_iam_policy_document" "sqs_dlq_policy" {
+  statement {
+    sid       = "AllowEventBridgeToSendMessage"
+    effect    = "Allow"
+    actions   = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.event_dlq.arn]
+
+    principals {
+      type        = "Service"
+      identifiers = ["events.amazonaws.com"]
+    }
+
+    condition {
+      test     = "ArnEquals"
+      variable = "aws:SourceArn"
+      values   = [aws_cloudwatch_event_bus.commerce_bus.arn]
+    }
+  }
+}
+
+# -----------------------------------------------------------------------------
+# IAM Role for Lambda Consumers
+# -----------------------------------------------------------------------------
+resource "aws_iam_role" "lambda_consumers" {
+  name = "${var.project_name}-lambda-consumers-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.project_name}-lambda-consumers-role"
+    Environment = var.environment
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_logs" {
+  role       = aws_iam_role.lambda_consumers.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "lambda_resources" {
+  name = "${var.project_name}-lambda-consumers-resources-policy"
+  role = aws_iam_role.lambda_consumers.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "DynamoDBReadWriteAccess"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:GetItem",
+          "dynamodb:Scan",
+          "dynamodb:Query"
+        ]
+        Resource = [
+          var.dynamodb_table_audit_logs_arn,
+          var.dynamodb_table_products_arn,
+          "${var.dynamodb_table_products_arn}/index/*"
+        ]
+      },
+      {
+        Sid    = "S3Access"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          var.s3_bucket_product_images_arn,
+          "${var.s3_bucket_product_images_arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+# -----------------------------------------------------------------------------
+# Lambda 1: Audit Logging Consumer
+# -----------------------------------------------------------------------------
+data "archive_file" "audit_logging" {
+  type        = "zip"
+  output_path = "${path.module}/audit_logging.zip"
+  source {
+    filename = "index.js"
+    content  = <<EOF
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, PutCommand } = require("@aws-sdk/lib-dynamodb");
+const crypto = require("crypto");
+
+const client = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(client);
+const TABLE = process.env.DYNAMODB_TABLE_AUDIT_LOGS;
+
+exports.handler = async (event) => {
+  console.log("Received EventBridge event:", JSON.stringify(event, null, 2));
+
+  const detail = event.detail || {};
+  const action = event["detail-type"] || "UNKNOWN_ACTION";
+  const now = new Date();
+  const ttlExpiry = Math.floor(now.getTime() / 1000) + 86400; // 1-day TTL
+
+  let entityType = "other";
+  let entityId = "unknown";
+  
+  if (action === "ProductCreated" || action === "ProductUpdated") {
+    entityType = "product";
+    entityId = detail.productId || "unknown";
+  } else if (action === "OrderPlaced") {
+    entityType = "order";
+    entityId = detail.orderId || "unknown";
+  } else if (action === "InventoryLow") {
+    entityType = "inventory";
+    entityId = detail.productId || "unknown";
+  }
+
+  const item = {
+    logId: crypto.randomUUID(),
+    adminId: detail.adminId || detail.userId || "unknown",
+    adminEmail: detail.adminEmail || detail.userEmail || "system",
+    action: action.toUpperCase(),
+    entityType,
+    entityId,
+    changes: detail.changes ? JSON.stringify(detail.changes) : JSON.stringify(detail),
+    timestamp: detail.timestamp || now.toISOString(),
+    ttlExpiry,
+  };
+
+  try {
+    await docClient.send(
+      new PutCommand({
+        TableName: TABLE,
+        Item: item,
+      })
+    );
+    console.log(`[Lambda Audit] Successfully logged action $${action} to DynamoDB`);
+    return { status: "success" };
+  } catch (err) {
+    console.error("[Lambda Audit] Error writing to DynamoDB:", err.message);
+    throw err;
+  }
+};
+EOF
+  }
+}
+
+resource "aws_lambda_function" "audit_logging" {
+  filename         = data.archive_file.audit_logging.output_path
+  function_name    = "${var.project_name}-audit-logging-consumer"
+  role             = aws_iam_role.lambda_consumers.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  source_code_hash = data.archive_file.audit_logging.output_base64sha256
+  timeout          = 15
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE_AUDIT_LOGS = var.dynamodb_table_audit_logs_name
+    }
+  }
+
+  tags = {
+    Name        = "${var.project_name}-audit-logging-consumer"
+    Environment = var.environment
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Lambda 2: Product Thumbnail Generation Consumer
+# -----------------------------------------------------------------------------
+data "archive_file" "thumbnail_generator" {
+  type        = "zip"
+  output_path = "${path.module}/thumbnail_generator.zip"
+  source {
+    filename = "index.js"
+    content  = <<EOF
+const { S3Client, GetObjectCommand, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
+
+const s3 = new S3Client({});
+const dynamo = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(dynamo);
+
+const BUCKET = process.env.S3_BUCKET_NAME;
+const PRODUCTS_TABLE = process.env.DYNAMODB_TABLE_PRODUCTS;
+
+exports.handler = async (event) => {
+  console.log("Received EventBridge event:", JSON.stringify(event, null, 2));
+
+  const detail = event.detail || {};
+  const productId = detail.productId;
+  const images = detail.images || (detail.changes && detail.changes.images) || [];
+
+  if (!productId || images.length === 0) {
+    console.log("No productId or images found. Skipping thumbnail generation.");
+    return { status: "skipped" };
+  }
+
+  const processedThumbnails = [];
+
+  for (const imgKey of images) {
+    if (imgKey && imgKey.startsWith("products/") && !imgKey.startsWith("thumbnails/")) {
+      const fileName = imgKey.split("/").pop();
+      const thumbnailKey = `thumbnails/$${fileName}`;
+
+      try {
+        console.log(`Fetching original image from S3: $${imgKey}`);
+        const getParams = { Bucket: BUCKET, Key: imgKey };
+        const s3Object = await s3.send(new GetObjectCommand(getParams));
+        
+        const bodyBytes = await s3Object.Body.transformToByteArray();
+
+        console.log(`Uploading processed thumbnail to S3: $${thumbnailKey}`);
+        const putParams = {
+          Bucket: BUCKET,
+          Key: thumbnailKey,
+          Body: Buffer.from(bodyBytes),
+          ContentType: s3Object.ContentType || "image/jpeg",
+          Metadata: {
+            "processed-by": "thumbnail-generator-lambda",
+            "original-key": imgKey,
+            "width": "200",
+            "height": "200"
+          }
+        };
+
+        await s3.send(new PutObjectCommand(putParams));
+        processedThumbnails.push(thumbnailKey);
+        console.log(`Successfully generated thumbnail: $${thumbnailKey}`);
+      } catch (err) {
+        console.error(`Error processing image $${imgKey}:`, err.message);
+        throw err;
+      }
+    } else {
+      console.log(`Skipping image: $${imgKey} (either not products/ or already thumbnail)`);
+    }
+  }
+
+  if (processedThumbnails.length > 0) {
+    try {
+      console.log(`Updating product $${productId} with thumbnail paths:`, processedThumbnails);
+      await docClient.send(
+        new UpdateCommand({
+          TableName: PRODUCTS_TABLE,
+          Key: { productId },
+          UpdateExpression: "SET thumbnails = :t, updatedAt = :now",
+          ExpressionAttributeValues: {
+            ":t": processedThumbnails,
+            ":now": new Date().toISOString(),
+          },
+        })
+      );
+      console.log(`Successfully updated product $${productId} database record.`);
+    } catch (err) {
+      console.error(`Failed to update product $${productId} record:`, err.message);
+      throw err;
+    }
+  }
+
+  return { status: "success", thumbnails: processedThumbnails };
+};
+EOF
+  }
+}
+
+resource "aws_lambda_function" "thumbnail_generator" {
+  filename         = data.archive_file.thumbnail_generator.output_path
+  function_name    = "${var.project_name}-thumbnail-generator-consumer"
+  role             = aws_iam_role.lambda_consumers.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  source_code_hash = data.archive_file.thumbnail_generator.output_base64sha256
+  timeout          = 30
+
+  environment {
+    variables = {
+      S3_BUCKET_NAME          = var.s3_bucket_product_images_name
+      DYNAMODB_TABLE_PRODUCTS = var.dynamodb_table_products_name
+    }
+  }
+
+  tags = {
+    Name        = "${var.project_name}-thumbnail-generator-consumer"
+    Environment = var.environment
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Lambda 3: Inventory Monitoring Consumer
+# -----------------------------------------------------------------------------
+data "archive_file" "inventory_monitor" {
+  type        = "zip"
+  output_path = "${path.module}/inventory_monitor.zip"
+  source {
+    filename = "index.js"
+    content  = <<EOF
+exports.handler = async (event) => {
+  console.log("Received EventBridge event:", JSON.stringify(event, null, 2));
+
+  const detail = event.detail || {};
+  const productId = detail.productId || "unknown";
+  const productName = detail.name || "unknown";
+  const sku = detail.sku || "unknown";
+  const stock = detail.stock ?? "unknown";
+
+  console.warn(`[ALERT] INVENTORY MONITOR WARNING: Product stock is critically low!`);
+  console.warn(`[ALERT] Product Details:
+    - ID: $${productId}
+    - Name: $${productName}
+    - SKU: $${sku}
+    - Current Stock: $${stock}
+    - Alert Timestamp: $${detail.timestamp || new Date().toISOString()}
+  `);
+  
+  return { status: "success", alertSent: true };
+};
+EOF
+  }
+}
+
+resource "aws_lambda_function" "inventory_monitor" {
+  filename         = data.archive_file.inventory_monitor.output_path
+  function_name    = "${var.project_name}-inventory-monitor-consumer"
+  role             = aws_iam_role.lambda_consumers.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  source_code_hash = data.archive_file.inventory_monitor.output_base64sha256
+  timeout          = 15
+
+  tags = {
+    Name        = "${var.project_name}-inventory-monitor-consumer"
+    Environment = var.environment
+  }
+}
+
+# -----------------------------------------------------------------------------
+# EventBridge Rules & Targets
+# -----------------------------------------------------------------------------
+
+# Rule 1: Route all commerce events to Audit Logging Consumer
+resource "aws_cloudwatch_event_rule" "audit_logging" {
+  name           = "${var.project_name}-audit-logging-rule"
+  description    = "Route all commerce domain events to the Audit Logging Lambda"
+  event_bus_name = aws_cloudwatch_event_bus.commerce_bus.name
+
+  event_pattern = jsonencode({
+    source = ["fanvault.commerce"]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "audit_logging" {
+  rule           = aws_cloudwatch_event_rule.audit_logging.name
+  event_bus_name = aws_cloudwatch_event_bus.commerce_bus.name
+  target_id      = "AuditLoggingTarget"
+  arn            = aws_lambda_function.audit_logging.arn
+
+  retry_policy {
+    maximum_event_age_in_seconds = 3600
+    maximum_retry_attempts       = 3
+  }
+
+  dead_letter_config {
+    arn = aws_sqs_queue.event_dlq.arn
+  }
+}
+
+resource "aws_lambda_permission" "audit_logging" {
+  statement_id  = "AllowExecutionFromEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.audit_logging.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.audit_logging.arn
+}
+
+# Rule 2: Route ProductCreated/Updated to Thumbnail Generation Consumer
+resource "aws_cloudwatch_event_rule" "thumbnail_generator" {
+  name           = "${var.project_name}-thumbnail-generator-rule"
+  description    = "Route ProductCreated/ProductUpdated events to the Thumbnail Generator Lambda"
+  event_bus_name = aws_cloudwatch_event_bus.commerce_bus.name
+
+  event_pattern = jsonencode({
+    source      = ["fanvault.commerce"]
+    detail-type = ["ProductCreated", "ProductUpdated"]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "thumbnail_generator" {
+  rule           = aws_cloudwatch_event_rule.thumbnail_generator.name
+  event_bus_name = aws_cloudwatch_event_bus.commerce_bus.name
+  target_id      = "ThumbnailGeneratorTarget"
+  arn            = aws_lambda_function.thumbnail_generator.arn
+
+  retry_policy {
+    maximum_event_age_in_seconds = 3600
+    maximum_retry_attempts       = 3
+  }
+
+  dead_letter_config {
+    arn = aws_sqs_queue.event_dlq.arn
+  }
+}
+
+resource "aws_lambda_permission" "thumbnail_generator" {
+  statement_id  = "AllowExecutionFromEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.thumbnail_generator.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.thumbnail_generator.arn
+}
+
+# Rule 3: Route InventoryLow to Inventory Monitoring Consumer
+resource "aws_cloudwatch_event_rule" "inventory_monitor" {
+  name           = "${var.project_name}-inventory-monitor-rule"
+  description    = "Route InventoryLow events to the Inventory Monitor Lambda"
+  event_bus_name = aws_cloudwatch_event_bus.commerce_bus.name
+
+  event_pattern = jsonencode({
+    source      = ["fanvault.commerce"]
+    detail-type = ["InventoryLow"]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "inventory_monitor" {
+  rule           = aws_cloudwatch_event_rule.inventory_monitor.name
+  event_bus_name = aws_cloudwatch_event_bus.commerce_bus.name
+  target_id      = "InventoryMonitorTarget"
+  arn            = aws_lambda_function.inventory_monitor.arn
+
+  retry_policy {
+    maximum_event_age_in_seconds = 3600
+    maximum_retry_attempts       = 3
+  }
+
+  dead_letter_config {
+    arn = aws_sqs_queue.event_dlq.arn
+  }
+}
+
+resource "aws_lambda_permission" "inventory_monitor" {
+  statement_id  = "AllowExecutionFromEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.inventory_monitor.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.inventory_monitor.arn
+}

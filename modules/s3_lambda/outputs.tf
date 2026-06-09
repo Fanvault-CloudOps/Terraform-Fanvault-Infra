@@ -22,3 +22,9 @@ output "cloudfront_domain_name" {
   value       = aws_cloudfront_distribution.product_images_distribution.domain_name
   description = "The domain name of the CloudFront distribution for product images"
 }
+
+output "s3_product_images_bucket_arn" {
+  value       = aws_s3_bucket.product_images.arn
+  description = "ARN of the product images S3 bucket"
+}
+

@@ -327,3 +327,20 @@ resource "aws_iam_role_policy_attachment" "github_actions_admin" {
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
+# Grant EventBridge publishing permissions to the backend EC2 role
+resource "aws_iam_role_policy" "backend_eventbridge" {
+  name   = "${var.project_name}-backend-eventbridge-policy"
+  role   = aws_iam_role.ec2_backend.id
+  policy = data.aws_iam_policy_document.backend_eventbridge.json
+}
+
+data "aws_iam_policy_document" "backend_eventbridge" {
+  statement {
+    sid       = "EventBridgePutEvents"
+    effect    = "Allow"
+    actions   = ["events:PutEvents"]
+    resources = ["arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:event-bus/${var.project_name}-event-bus"]
+  }
+}
+
+

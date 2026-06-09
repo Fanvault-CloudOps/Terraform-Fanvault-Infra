@@ -99,3 +99,10 @@ variable "dynamodb_table_metadata" {
   description = "Name of the fanvault-metadata DynamoDB table"
   default     = "fanvault-metadata"
 }
+
+variable "eventbridge_bus_name" {
+  type        = string
+  description = "Name of the EventBridge custom event bus"
+  default     = "fanvault-event-bus"
+}
+

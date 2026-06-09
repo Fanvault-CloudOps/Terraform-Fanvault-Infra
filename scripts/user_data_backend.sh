@@ -75,6 +75,7 @@ TABLE_PRODUCTS=$(ssm_get "/fanvault/dynamodb/table_products" "fanvault-products"
 TABLE_ORDERS=$(ssm_get "/fanvault/dynamodb/table_orders"        "fanvault-orders")
 TABLE_AUDIT_LOGS=$(ssm_get "/fanvault/dynamodb/table_audit_logs" "fanvault-audit-logs")
 TABLE_METADATA=$(ssm_get "/fanvault/dynamodb/table_metadata"     "fanvault-metadata")
+EB_BUS_NAME=$(ssm_get "/fanvault/eventbridge/bus_name"           "fanvault-event-bus")
 S3_BUCKET=$(ssm_get "/fanvault/s3/bucket"                "fanvault-architecture")
 S3_REGION=$(ssm_get "/fanvault/s3/region"                "$AWS_REGION")
 
@@ -136,6 +137,7 @@ DYNAMODB_TABLE_PRODUCTS=${TABLE_PRODUCTS}
 DYNAMODB_TABLE_ORDERS=${TABLE_ORDERS}
 DYNAMODB_TABLE_AUDIT_LOGS=${TABLE_AUDIT_LOGS}
 DYNAMODB_TABLE_METADATA=${TABLE_METADATA}
+EVENTBRIDGE_BUS_NAME=${EB_BUS_NAME}
 
 # JWT (must match identity service — verification only, no signing here)
 JWT_SECRET=${JWT_SECRET}

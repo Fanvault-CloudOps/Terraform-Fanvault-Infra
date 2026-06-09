@@ -58,7 +58,7 @@ module "dynamodb" {
   environment       = var.environment
   billing_mode      = "PAY_PER_REQUEST" # On-demand — no capacity planning required
   enable_pitr       = true              # Point-in-Time Recovery for all tables
-  enable_encryption = true             # AWS-owned KMS encryption at rest
+  enable_encryption = true              # AWS-owned KMS encryption at rest
 }
 
 # 5. SSM Module — Parameter Store
@@ -80,9 +80,9 @@ module "ssm" {
   jwt_refresh_secret = var.jwt_refresh_secret # Supply via terraform.tfvars (sensitive)
 
   # DynamoDB table names (sourced from module outputs — always consistent)
-  dynamodb_table_users    = module.dynamodb.table_users_name
-  dynamodb_table_profiles = module.dynamodb.table_profiles_name
-  dynamodb_table_products = module.dynamodb.table_products_name
+  dynamodb_table_users      = module.dynamodb.table_users_name
+  dynamodb_table_profiles   = module.dynamodb.table_profiles_name
+  dynamodb_table_products   = module.dynamodb.table_products_name
   dynamodb_table_orders     = module.dynamodb.table_orders_name
   dynamodb_table_audit_logs = module.dynamodb.table_audit_logs_name
   dynamodb_table_metadata   = module.dynamodb.table_metadata_name
@@ -91,7 +91,10 @@ module "ssm" {
   s3_bucket_name    = module.s3_lambda.s3_bucket_name
   s3_cloudfront_url = module.s3_lambda.cloudfront_domain_name
 
-  depends_on = [module.dynamodb, module.s3_lambda]
+  # EventBridge bus name
+  eventbridge_bus_name = module.event_driven.event_bus_name
+
+  depends_on = [module.dynamodb, module.s3_lambda, module.event_driven]
 }
 
 # 6. S3 & Lambda Module
@@ -101,7 +104,20 @@ module "s3_lambda" {
   project_name    = var.project_name
   environment     = var.environment
   cors_origin     = var.cors_origin
-  
+}
+
+# 7. Event-Driven Workflows Module (EventBridge + Lambda Consumers)
+module "event_driven" {
+  source                         = "./modules/event_driven"
+  project_name                   = var.project_name
+  environment                    = var.environment
+  aws_region                     = var.aws_region
+  dynamodb_table_audit_logs_arn  = module.dynamodb.table_audit_logs_arn
+  dynamodb_table_audit_logs_name = module.dynamodb.table_audit_logs_name
+  dynamodb_table_products_arn    = module.dynamodb.table_products_arn
+  dynamodb_table_products_name   = module.dynamodb.table_products_name
+  s3_bucket_product_images_arn   = module.s3_lambda.s3_product_images_bucket_arn
+  s3_bucket_product_images_name  = module.s3_lambda.s3_bucket_name
 }
 
 
