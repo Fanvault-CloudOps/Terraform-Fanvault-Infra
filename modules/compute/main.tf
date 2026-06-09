@@ -206,6 +206,22 @@ resource "aws_lb_listener_rule" "auth_path" {
   }
 }
 
+resource "aws_lb_listener_rule" "admin_path" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 15
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.commerce.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/admin*"]
+    }
+  }
+}
+
 # Rule 3 (P20): Path /api/users/* -> Identity TG
 resource "aws_lb_listener_rule" "users_path" {
   listener_arn = aws_lb_listener.http.arn

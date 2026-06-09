@@ -19,46 +19,14 @@ resource "aws_s3_bucket_versioning" "product_images_versioning" {
   }
 }
 
-# 2. KMS Key Encryption
-resource "aws_kms_key" "product_images_key" {
-  description             = "KMS key for encrypting S3 product images"
-  deletion_window_in_days = 7
-  enable_key_rotation     = true
 
-  tags = {
-    Name        = "${var.project_name}-product-images-key"
-    Environment = var.environment
-  }
-}
-
-# Default Key Policy to allow Root account delegation to IAM policies
-resource "aws_kms_key_policy" "product_images_key_policy" {
-  key_id = aws_kms_key.product_images_key.id
-  policy = data.aws_iam_policy_document.kms_root_policy.json
-}
-
-data "aws_iam_policy_document" "kms_root_policy" {
-  statement {
-    sid       = "Enable IAM User Permissions"
-    effect    = "Allow"
-    actions   = ["kms:*"]
-    resources = ["*"]
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
-    }
-  }
-}
-
-data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "product_images_sse" {
   bucket = aws_s3_bucket.product_images.id
 
   rule {
     apply_server_side_encryption_by_default {
-      kms_master_key_id = aws_kms_key.product_images_key.arn
-      sse_algorithm     = "aws:kms"
+      sse_algorithm = "AES256"
     }
   }
 }
@@ -103,11 +71,13 @@ resource "aws_s3_bucket_cors_configuration" "product_images_cors" {
 
   cors_rule {
     allowed_headers = ["*"]
-    allowed_methods = ["PUT", "POST", "GET"]
+    allowed_methods = ["PUT", "POST", "GET","HEAD"]
     allowed_origins = [
       var.cors_origin,
       "http://localhost:5173",
-      "http://localhost:3000"
+      "http://localhost:3000",
+      "http://fanvault-alb-1847577865.us-east-1.elb.amazonaws.com/",
+      "https://admin.fanvault.com"
     ]
     expose_headers  = ["ETag"]
     max_age_seconds = 3000
