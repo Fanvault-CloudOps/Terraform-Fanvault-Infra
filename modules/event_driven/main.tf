@@ -260,23 +260,31 @@ async function publishFailure(productId, errorMsg, originalKey, correlationId) {
     console.error("SNS_TOPIC_ARN not configured.");
     return;
   }
-  const payload = {
-    service: "thumbnail-generator-lambda",
-    eventType: "ProductUploadFailure",
-    resource: `Product:$${productId || "unknown"}`,
-    timestamp: new Date().toISOString(),
-    severity: "ERROR",
-    correlationId,
-    details: {
-      productId,
-      imageKey: originalKey,
-      errorMessage: errorMsg
-    }
-  };
+  const timestamp = new Date().toISOString();
+  const border = "--------------------------------------------------";
+  
+  const formattedMessage = `🚨 [ERROR] ProductUploadFailure
+$${border}
+An operational incident was reported.
+
+• Service:        thumbnail-generator-lambda
+• Event Type:     ProductUploadFailure
+• Resource:       Product:$${productId || "unknown"}
+• Severity:       ERROR
+• Timestamp:      $${timestamp}
+• Correlation ID: $${correlationId}
+
+Alert Details:
+$${border}
+• Product ID:     $${productId || "unknown"}
+• Image Key:      $${originalKey}
+• Error Message:  $${errorMsg}
+$${border}
+`;
   try {
     await sns.send(new PublishCommand({
       TopicArn: SNS_TOPIC_ARN,
-      Message: JSON.stringify(payload, null, 2),
+      Message: formattedMessage,
       Subject: `Product Upload Failure Alert: Product $${productId || "unknown"}`
     }));
     console.log("Upload failure alert sent to SNS.");
@@ -428,25 +436,31 @@ exports.handler = async (event) => {
     return { status: "skipped", reason: "no_topic_arn" };
   }
 
-  const payload = {
-    service: "fanvault-commerce-service",
-    eventType: "LowInventoryAlert",
-    resource: `Product:$${productId}`,
-    timestamp: detail.timestamp || new Date().toISOString(),
-    severity: "WARNING",
-    correlationId,
-    details: {
-      productId,
-      productName,
-      sku,
-      currentStock: stock
-    }
-  };
+  const border = "--------------------------------------------------";
+  const formattedMessage = `⚠️ [WARNING] LowInventoryAlert
+$${border}
+A product's stock has dropped below the threshold.
+
+• Service:        fanvault-commerce-service
+• Event Type:     LowInventoryAlert
+• Resource:       Product:$${productId}
+• Severity:       WARNING
+• Timestamp:      $${detail.timestamp || new Date().toISOString()}
+• Correlation ID: $${correlationId}
+
+Alert Details:
+$${border}
+• Product ID:     $${productId}
+• Product Name:   $${productName}
+• SKU:            $${sku}
+• Current Stock:  $${stock}
+$${border}
+`;
 
   try {
     const response = await sns.send(new PublishCommand({
       TopicArn: topicArn,
-      Message: JSON.stringify(payload, null, 2),
+      Message: formattedMessage,
       Subject: `Low Inventory Alert: $${productName} ($${sku})`
     }));
     console.log("Alert published to SNS successfully. MessageId:", response.MessageId);
