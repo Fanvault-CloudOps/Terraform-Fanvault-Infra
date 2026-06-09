@@ -29,6 +29,7 @@ module "iam" {
   source       = "./modules/iam"
   project_name = var.project_name
   environment  = var.environment
+  github_repo  = var.github_repo
 
   # Scope DynamoDB permissions to all FanVault table ARNs (least privilege)
   dynamodb_table_arns = [

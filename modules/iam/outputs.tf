@@ -34,3 +34,9 @@ output "ec2_frontend_instance_profile_arn" {
   value       = aws_iam_instance_profile.ec2_frontend.arn
   description = "ARN of the frontend EC2 instance profile"
 }
+
+output "github_actions_role_arn" {
+  value       = aws_iam_role.github_actions.arn
+  description = "ARN of the IAM role assumed by GitHub Actions via OIDC"
+}
+

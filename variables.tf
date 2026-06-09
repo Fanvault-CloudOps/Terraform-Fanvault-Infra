@@ -51,3 +51,10 @@ variable "jwt_refresh_secret" {
   sensitive   = true
   default     = "CHANGE_ME_TO_A_DIFFERENT_RANDOM_32_PLUS_CHAR_STRING"
 }
+
+variable "github_repo" {
+  type        = string
+  description = "GitHub repository name in the format 'owner/repo' (e.g. 'Savitxr/Fanvault-v2')"
+  default     = "Savitxr/Fanvault-v2"
+}
+

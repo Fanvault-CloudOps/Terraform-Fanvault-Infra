@@ -33,3 +33,10 @@ variable "s3_bucket_name_prefix" {
   description = "S3 bucket name prefix (e.g. 'fanvault') used to scope s3:GetObject policy to 'arn:aws:s3:::fanvault-*/*'"
   default     = "fanvault"
 }
+
+variable "github_repo" {
+  type        = string
+  description = "GitHub repository name in the format 'owner/repo' (e.g. 'Savitxr/Fanvault-v2')"
+  default     = "Savitxr/Fanvault-v2"
+}
+
