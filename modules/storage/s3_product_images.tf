@@ -117,30 +117,119 @@ resource "aws_cloudfront_origin_access_control" "product_images_oac" {
 }
 
 resource "aws_cloudfront_distribution" "product_images_distribution" {
+  # 1. S3 Origin
   origin {
     domain_name              = aws_s3_bucket.product_images.bucket_regional_domain_name
     origin_id                = "S3-${aws_s3_bucket.product_images.id}"
     origin_access_control_id = aws_cloudfront_origin_access_control.product_images_oac.id
   }
 
+  # 2. ALB Origin
+  origin {
+    domain_name = var.alb_dns_name
+    origin_id   = "ALB-${var.project_name}"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+
+    custom_header {
+      name  = "X-Custom-Header"
+      value = var.cloudfront_to_alb_custom_header
+    }
+  }
+
   enabled             = true
   is_ipv6_enabled     = true
-  comment             = "CloudFront CDN for FanVault product images"
+  comment             = "CloudFront CDN for FanVault (S3 + ALB Single Entry Point)"
   default_root_object = ""
+  web_acl_id          = var.waf_web_acl_arn
 
+  # Default behavior targets ALB (Frontend)
   default_cache_behavior {
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "ALB-${var.project_name}"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    # CachingDisabled
+    cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+
+    # AllViewer
+    origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
+  }
+
+  # Ordered Cache Behaviors for S3 Origin (Product images / folders)
+  ordered_cache_behavior {
+    path_pattern     = "/products/*"
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "S3-${aws_s3_bucket.product_images.id}"
 
-    # Use AWS-managed CachingOptimized policy
-    cache_policy_id = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    # CachingOptimized
+    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "/thumbnails/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "S3-${aws_s3_bucket.product_images.id}"
+
+    # CachingOptimized
+    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "/categories/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "S3-${aws_s3_bucket.product_images.id}"
+
+    # CachingOptimized
+    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "/images/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "S3-${aws_s3_bucket.product_images.id}"
+
+    # CachingOptimized
+    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+  }
+
+  # Ordered Cache Behavior for API requests to ALB Origin
+  ordered_cache_behavior {
+    path_pattern     = "/api/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "ALB-${var.project_name}"
+
+    # CachingDisabled
+    cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+
+    # AllViewer
+    origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
 
     viewer_protocol_policy = "redirect-to-https"
     compress               = true
   }
 
-  price_class = "PriceClass_100" # Use only North America and Europe edge locations (lowest cost)
+  price_class = "PriceClass_100"
 
   restrictions {
     geo_restriction {

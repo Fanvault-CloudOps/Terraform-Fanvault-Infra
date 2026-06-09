@@ -167,8 +167,13 @@ resource "aws_lb_listener" "http" {
   protocol          = "HTTP"
 
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.frontend.arn
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Access Denied: Direct load balancer access is forbidden."
+      status_code  = "403"
+    }
   }
 }
 
@@ -185,6 +190,13 @@ resource "aws_lb_listener_rule" "arch_host" {
   condition {
     host_header {
       values = ["arch.fanvault.com"]
+    }
+  }
+
+  condition {
+    http_header {
+      http_header_name = "X-Custom-Header"
+      values           = [var.cloudfront_to_alb_custom_header]
     }
   }
 }
@@ -204,6 +216,13 @@ resource "aws_lb_listener_rule" "auth_path" {
       values = ["/api/auth*"]
     }
   }
+
+  condition {
+    http_header {
+      http_header_name = "X-Custom-Header"
+      values           = [var.cloudfront_to_alb_custom_header]
+    }
+  }
 }
 
 resource "aws_lb_listener_rule" "admin_path" {
@@ -218,6 +237,13 @@ resource "aws_lb_listener_rule" "admin_path" {
   condition {
     path_pattern {
       values = ["/api/admin*"]
+    }
+  }
+
+  condition {
+    http_header {
+      http_header_name = "X-Custom-Header"
+      values           = [var.cloudfront_to_alb_custom_header]
     }
   }
 }
@@ -237,6 +263,13 @@ resource "aws_lb_listener_rule" "users_path" {
       values = ["/api/users*"]
     }
   }
+
+  condition {
+    http_header {
+      http_header_name = "X-Custom-Header"
+      values           = [var.cloudfront_to_alb_custom_header]
+    }
+  }
 }
 
 # Rule 4 (P30): Path /api/products/* -> Commerce TG
@@ -254,6 +287,13 @@ resource "aws_lb_listener_rule" "products_path" {
       values = ["/api/products*"]
     }
   }
+
+  condition {
+    http_header {
+      http_header_name = "X-Custom-Header"
+      values           = [var.cloudfront_to_alb_custom_header]
+    }
+  }
 }
 
 # Rule 5 (P40): Path /api/orders/* -> Commerce TG
@@ -269,6 +309,37 @@ resource "aws_lb_listener_rule" "orders_path" {
   condition {
     path_pattern {
       values = ["/api/orders*"]
+    }
+  }
+
+  condition {
+    http_header {
+      http_header_name = "X-Custom-Header"
+      values           = [var.cloudfront_to_alb_custom_header]
+    }
+  }
+}
+
+# Rule 6 (P99): Default Frontend Routing via CloudFront Custom Header
+resource "aws_lb_listener_rule" "frontend_default" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 99
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.frontend.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/*"]
+    }
+  }
+
+  condition {
+    http_header {
+      http_header_name = "X-Custom-Header"
+      values           = [var.cloudfront_to_alb_custom_header]
     }
   }
 }

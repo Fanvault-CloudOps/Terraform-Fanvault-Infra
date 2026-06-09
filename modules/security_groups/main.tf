@@ -1,15 +1,19 @@
-# 1. ALB Security Group (Internet Ingress)
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
+# 1. ALB Security Group (Internet Ingress via CloudFront only)
 resource "aws_security_group" "alb" {
   name        = "${var.project_name}-alb-sg"
   description = "Security Group for Internet-facing ALB"
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "Allow public HTTP traffic"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "Allow HTTP traffic from CloudFront only"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    prefix_list_ids = [data.aws_ec2_managed_prefix_list.cloudfront.id]
   }
 
   egress {
@@ -130,6 +134,34 @@ resource "aws_security_group" "backend" {
 
   tags = {
     Name        = "${var.project_name}-backend-sg"
+    Environment = var.environment
+  }
+}
+
+# 5. VPC Endpoints Security Group (Allow HTTPS 443 from local VPC CIDR)
+resource "aws_security_group" "vpc_endpoints" {
+  name        = "${var.project_name}-vpc-endpoints-sg"
+  description = "Security Group for VPC Interface Endpoints"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    description = "Allow HTTPS from VPC CIDR"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.project_name}-vpc-endpoints-sg"
     Environment = var.environment
   }
 }

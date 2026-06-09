@@ -40,3 +40,20 @@ variable "cors_origin" {
   type        = string
   description = "Allowed CORS origin for both backend services"
 }
+
+variable "waf_web_acl_arn" {
+  type        = string
+  description = "The ARN of the WAFv2 Web ACL to associate with CloudFront"
+  default     = ""
+}
+
+variable "alb_dns_name" {
+  type        = string
+  description = "DNS name of the Application Load Balancer"
+}
+
+variable "cloudfront_to_alb_custom_header" {
+  type        = string
+  description = "Custom secret header value sent from CloudFront to ALB"
+  sensitive   = true
+}

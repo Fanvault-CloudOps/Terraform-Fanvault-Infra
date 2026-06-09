@@ -64,4 +64,10 @@ variable "alert_email" {
   default     = ""
 }
 
+variable "geo_blocked_countries" {
+  type        = list(string)
+  description = "List of ISO country codes to block via AWS WAF"
+  default     = []
+}
+
 

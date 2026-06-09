@@ -42,3 +42,18 @@ output "sns_topic_admin_operational_alert_arn" {
   value       = module.notifications.sns_topic_admin_operational_alert_arn
   description = "ARN of the Admin Operational Alerts SNS topic"
 }
+
+output "waf_web_acl_arn" {
+  value       = module.governance.waf_web_acl_arn
+  description = "ARN of the WAFv2 Web ACL"
+}
+
+output "waf_web_acl_id" {
+  value       = module.governance.waf_web_acl_id
+  description = "ID of the WAFv2 Web ACL"
+}
+
+output "waf_web_acl_name" {
+  value       = module.governance.waf_web_acl_name
+  description = "Name of the WAFv2 Web ACL"
+}

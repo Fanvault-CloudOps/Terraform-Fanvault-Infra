@@ -5,11 +5,18 @@
 
 data "aws_caller_identity" "current" {}
 
+locals {
+  # Secret custom header token passed from CloudFront to ALB to prevent direct ingress
+  cf_to_alb_header = "FanVaultSecureHeaderToken2026!"
+}
+
 # 1. Networking Module (formerly vpc)
 module "networking" {
-  source       = "./modules/networking"
-  project_name = var.project_name
-  environment  = var.environment
+  source              = "./modules/networking"
+  project_name        = var.project_name
+  environment         = var.environment
+  vpc_endpoints_sg_id = module.security_groups.vpc_endpoints_sg_id
+  aws_region          = var.aws_region
 }
 
 # 2. Security Groups Module (formerly security)
@@ -74,14 +81,17 @@ module "iam" {
 
 # 5. Storage Module (combines dynamodb and s3_lambda)
 module "storage" {
-  source            = "./modules/storage"
-  project_name      = var.project_name
-  environment       = var.environment
-  billing_mode      = "PAY_PER_REQUEST"
-  enable_pitr       = true
-  enable_encryption = true
-  lambda_role_arn   = module.iam.lambda_role_arn
-  cors_origin       = var.cors_origin
+  source                          = "./modules/storage"
+  project_name                    = var.project_name
+  environment                     = var.environment
+  billing_mode                    = "PAY_PER_REQUEST"
+  enable_pitr                     = true
+  enable_encryption               = true
+  lambda_role_arn                 = module.iam.lambda_role_arn
+  cors_origin                     = var.cors_origin
+  waf_web_acl_arn                 = module.governance.waf_web_acl_arn
+  alb_dns_name                    = module.backend.alb_dns_name
+  cloudfront_to_alb_custom_header = local.cf_to_alb_header
 }
 
 # 6. Configuration Module (formerly ssm)
@@ -148,35 +158,73 @@ module "event_processing" {
 
 # 8. Backend Module (formerly compute)
 module "backend" {
-  source                   = "./modules/backend"
-  vpc_id                   = module.networking.vpc_id
-  public_subnets           = module.networking.public_subnets
-  frontend_private_subnets = module.networking.frontend_private_subnets
-  backend_private_subnets  = module.networking.backend_private_subnets
-  database_private_subnets = module.networking.database_private_subnets
-  alb_sg_id                = module.security_groups.alb_sg_id
-  frontend_sg_id           = module.security_groups.frontend_sg_id
-  backend_sg_id            = module.security_groups.backend_sg_id
-  bastion_sg_id            = module.security_groups.bastion_sg_id
-  lambda_function_arn      = module.storage.lambda_function_arn
-  lambda_function_name     = module.storage.lambda_function_name
-  key_name                 = var.key_name
-  project_name             = var.project_name
-  environment              = var.environment
+  source                          = "./modules/backend"
+  vpc_id                          = module.networking.vpc_id
+  public_subnets                  = module.networking.public_subnets
+  frontend_private_subnets        = module.networking.frontend_private_subnets
+  backend_private_subnets         = module.networking.backend_private_subnets
+  database_private_subnets        = module.networking.database_private_subnets
+  alb_sg_id                       = module.security_groups.alb_sg_id
+  frontend_sg_id                  = module.security_groups.frontend_sg_id
+  backend_sg_id                   = module.security_groups.backend_sg_id
+  bastion_sg_id                   = module.security_groups.bastion_sg_id
+  lambda_function_arn             = module.storage.lambda_function_arn
+  lambda_function_name            = module.storage.lambda_function_name
+  key_name                        = var.key_name
+  project_name                    = var.project_name
+  environment                     = var.environment
+  cloudfront_to_alb_custom_header = local.cf_to_alb_header
 
   # IAM Instance Profiles
   ec2_backend_instance_profile_name  = module.iam.ec2_backend_instance_profile_name
   ec2_frontend_instance_profile_name = module.iam.ec2_frontend_instance_profile_name
 
-  depends_on = [module.iam, module.configuration]
+  depends_on = [module.iam]
 }
 
-# 9. Monitoring Module (Placeholder)
+# 9. Monitoring Module
 module "monitoring" {
-  source = "./modules/monitoring"
+  source              = "./modules/monitoring"
+  project_name        = var.project_name
+  environment         = var.environment
+  sns_topic_arn       = module.notifications.sns_topic_admin_operational_alert_arn
+  alb_arn_suffix      = module.backend.alb_arn_suffix
+  bastion_instance_id = module.backend.bastion_instance_id
+
+  target_groups = {
+    frontend = module.backend.frontend_tg_arn_suffix
+    identity = module.backend.identity_tg_arn_suffix
+    commerce = module.backend.commerce_tg_arn_suffix
+    lambda   = module.backend.lambda_tg_arn_suffix
+  }
+
+  asg_names = [
+    module.backend.frontend_asg_name,
+    module.backend.backend_asg_name
+  ]
+
+  dynamodb_tables = module.storage.dynamodb_tables
+
+  lambda_functions = [
+    "${var.project_name}-audit-logging-consumer",
+    "${var.project_name}-thumbnail-generator-consumer",
+    "${var.project_name}-inventory-monitor-consumer",
+    module.storage.lambda_function_name
+  ]
+
+  sns_topics = [
+    "${var.project_name}-low-inventory-alerts",
+    "${var.project_name}-order-failure-alerts",
+    "${var.project_name}-product-upload-failures",
+    "${var.project_name}-admin-operational-alerts"
+  ]
 }
 
-# 10. Governance Module (Placeholder)
+
+# 10. Governance Module (AWS WAFv2)
 module "governance" {
-  source = "./modules/governance"
+  source                = "./modules/governance"
+  project_name          = var.project_name
+  environment           = var.environment
+  geo_blocked_countries = var.geo_blocked_countries
 }

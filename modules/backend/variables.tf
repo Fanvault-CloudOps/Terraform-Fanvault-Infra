@@ -78,3 +78,9 @@ variable "ec2_frontend_instance_profile_name" {
   type        = string
   description = "Name of the IAM instance profile to attach to frontend EC2 Launch Template"
 }
+
+variable "cloudfront_to_alb_custom_header" {
+  type        = string
+  description = "Custom secret header value sent from CloudFront to ALB"
+  sensitive   = true
+}
