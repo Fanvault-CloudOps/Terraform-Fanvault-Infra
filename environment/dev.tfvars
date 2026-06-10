@@ -1,0 +1,11 @@
+aws_region            = "us-east-1"
+project_name          = "fanvault"
+environment           = "dev"
+admin_ssh_ip          = "0.0.0.0/0"
+key_name              = "fanvault-key"
+# cors_origin           = "https://fanvault.example.com"
+jwt_secret            = "YOUR_RANDOM_STRING_AT_LEAST_32_CHARS_LONG"
+jwt_refresh_secret    = "YOUR_DIFFERENT_RANDOM_STRING_AT_LEAST_32_CHARS"
+github_repo           = "Savitxr/TF-ProjR1"
+alert_email           = ""
+geo_blocked_countries = []
