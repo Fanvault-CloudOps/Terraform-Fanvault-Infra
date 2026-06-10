@@ -72,14 +72,7 @@ resource "aws_s3_bucket_cors_configuration" "product_images_cors" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["PUT", "POST", "GET", "HEAD"]
-    allowed_origins = [
-      var.cors_origin,
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "http://fanvault-alb-1847577865.us-east-1.elb.amazonaws.com",
-      "https://fanvault-alb-1847577865.us-east-1.elb.amazonaws.com",
-      "https://admin.fanvault.com"
-    ]
+    allowed_origins = ["*"] # Allow all origins for development/testing; restrict in production
     expose_headers  = ["ETag"]
     max_age_seconds = 3000
   }

@@ -32,9 +32,9 @@ variable "bastion_instance_id" {
   description = "Instance ID of the Bastion EC2 host"
 }
 
-variable "asg_names" {
-  type        = list(string)
-  description = "List of Auto Scaling Group names to monitor"
+variable "asgs" {
+  type        = map(string)
+  description = "Map of static keys to Auto Scaling Group names to monitor"
 }
 
 variable "dynamodb_tables" {
@@ -42,12 +42,12 @@ variable "dynamodb_tables" {
   description = "Map of DynamoDB table names to monitor"
 }
 
-variable "lambda_functions" {
-  type        = list(string)
-  description = "List of Lambda function names to monitor"
+variable "lambdas" {
+  type        = map(string)
+  description = "Map of static keys to Lambda function names to monitor"
 }
 
 variable "sns_topics" {
-  type        = list(string)
-  description = "List of SNS topic names to monitor"
+  type        = map(string)
+  description = "Map of static keys to SNS topic names to monitor"
 }

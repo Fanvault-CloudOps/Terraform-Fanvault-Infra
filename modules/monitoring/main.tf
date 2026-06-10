@@ -5,7 +5,7 @@
 # ── 1. CloudWatch Log Groups for Lambda Consumers ─────────────────────────────
 # Set with 1-day retention to manage log lifecycle cost-effectively.
 resource "aws_cloudwatch_log_group" "lambda_logs" {
-  for_each          = toset(var.lambda_functions)
+  for_each          = var.lambdas
   name              = "/aws/lambda/${each.value}"
   retention_in_days = 1 # Minimum retention equal/higher than 1 day
 
@@ -72,8 +72,8 @@ resource "aws_cloudwatch_metric_alarm" "tg_5xx" {
 
 # Auto Scaling Group average CPU utilization > 80%
 resource "aws_cloudwatch_metric_alarm" "asg_cpu" {
-  for_each            = toset(var.asg_names)
-  alarm_name          = "${var.project_name}-asg-${each.value}-cpu-alarm"
+  for_each            = var.asgs
+  alarm_name          = "${var.project_name}-asg-${each.key}-cpu-alarm"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "CPUUtilization"
@@ -199,8 +199,8 @@ resource "aws_cloudwatch_metric_alarm" "dynamodb_write_throttle" {
 
 # Lambda Execution Errors
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
-  for_each            = toset(var.lambda_functions)
-  alarm_name          = "${var.project_name}-lambda-${each.value}-errors"
+  for_each            = var.lambdas
+  alarm_name          = "${var.project_name}-lambda-${each.key}-errors"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 1
   metric_name         = "Errors"
@@ -224,8 +224,8 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
 
 # Lambda Execution Duration Warnings (> 10s average duration)
 resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
-  for_each            = toset(var.lambda_functions)
-  alarm_name          = "${var.project_name}-lambda-${each.value}-duration"
+  for_each            = var.lambdas
+  alarm_name          = "${var.project_name}-lambda-${each.key}-duration"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "Duration"
@@ -251,8 +251,8 @@ resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
 
 # SNS Notification Delivery Failures
 resource "aws_cloudwatch_metric_alarm" "sns_delivery_failures" {
-  for_each            = toset(var.sns_topics)
-  alarm_name          = "${var.project_name}-sns-${each.value}-delivery-failures"
+  for_each            = var.sns_topics
+  alarm_name          = "${var.project_name}-sns-${each.key}-delivery-failures"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 1
   metric_name         = "NumberOfNotificationsFailed"
@@ -339,7 +339,7 @@ resource "aws_cloudwatch_dashboard" "observability" {
         height = 6
         properties = {
           metrics = [
-            for asg in var.asg_names :
+            for asg in values(var.asgs) :
             ["AWS/EC2", "CPUUtilization", "AutoScalingGroupName", asg, { label = asg }]
           ]
           period  = 300
@@ -409,7 +409,7 @@ resource "aws_cloudwatch_dashboard" "observability" {
         height = 6
         properties = {
           metrics = [
-            for fn in var.lambda_functions :
+            for fn in values(var.lambdas) :
             ["AWS/Lambda", "Errors", "FunctionName", fn, { label = "${fn} Errors" }]
           ]
           period  = 60
@@ -428,7 +428,7 @@ resource "aws_cloudwatch_dashboard" "observability" {
         height = 6
         properties = {
           metrics = [
-            for fn in var.lambda_functions :
+            for fn in values(var.lambdas) :
             ["AWS/Lambda", "Duration", "FunctionName", fn, { label = "${fn} Duration" }]
           ]
           period  = 60
@@ -448,7 +448,7 @@ resource "aws_cloudwatch_dashboard" "observability" {
         height = 6
         properties = {
           metrics = [
-            for topic in var.sns_topics :
+            for topic in values(var.sns_topics) :
             ["AWS/SNS", "NumberOfNotificationsFailed", "TopicName", topic, { label = "${topic} Failures" }]
           ]
           period  = 60
