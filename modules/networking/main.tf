@@ -1,23 +1,28 @@
+locals {
+  common_tags = {
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
 
-  tags = {
-    Name        = "${var.project_name}-vpc"
-    Environment = var.environment
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-vpc"
+  })
 }
 
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
 
-  tags = {
-    Name        = "${var.project_name}-igw"
-    Environment = var.environment
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-igw"
+  })
 }
-
 
 resource "aws_subnet" "public" {
   count                   = 2
@@ -26,10 +31,9 @@ resource "aws_subnet" "public" {
   availability_zone       = count.index == 0 ? "us-east-1a" : "us-east-1b"
   map_public_ip_on_launch = true
 
-  tags = {
-    Name        = "${var.project_name}-public-1${count.index == 0 ? "a" : "b"}"
-    Environment = var.environment
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-public-1${count.index == 0 ? "a" : "b"}"
+  })
 }
 
 resource "aws_subnet" "frontend_private" {
@@ -38,10 +42,9 @@ resource "aws_subnet" "frontend_private" {
   cidr_block        = "10.0.1${count.index + 1}.0/24"
   availability_zone = count.index == 0 ? "us-east-1a" : "us-east-1b"
 
-  tags = {
-    Name        = "${var.project_name}-frontend-1${count.index == 0 ? "a" : "b"}"
-    Environment = var.environment
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-frontend-1${count.index == 0 ? "a" : "b"}"
+  })
 }
 
 resource "aws_subnet" "backend_private" {
@@ -50,10 +53,9 @@ resource "aws_subnet" "backend_private" {
   cidr_block        = "10.0.2${count.index + 1}.0/24"
   availability_zone = count.index == 0 ? "us-east-1a" : "us-east-1b"
 
-  tags = {
-    Name        = "${var.project_name}-backend-1${count.index == 0 ? "a" : "b"}"
-    Environment = var.environment
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-backend-1${count.index == 0 ? "a" : "b"}"
+  })
 }
 
 resource "aws_subnet" "database_private" {
@@ -62,33 +64,29 @@ resource "aws_subnet" "database_private" {
   cidr_block        = "10.0.3${count.index + 1}.0/24"
   availability_zone = count.index == 0 ? "us-east-1a" : "us-east-1b"
 
-  tags = {
-    Name        = "${var.project_name}-db-1${count.index == 0 ? "a" : "b"}"
-    Environment = var.environment
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-db-1${count.index == 0 ? "a" : "b"}"
+  })
 }
 
 resource "aws_eip" "nat_eip" {
   domain = "vpc"
 
-  tags = {
-    Name        = "${var.project_name}-nat-eip"
-    Environment = var.environment
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-nat-eip"
+  })
 }
 
 resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.nat_eip.id
   subnet_id     = aws_subnet.public[0].id
 
-  tags = {
-    Name        = "${var.project_name}-nat-gw"
-    Environment = var.environment
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-nat-gw"
+  })
 
   depends_on = [aws_internet_gateway.igw]
 }
-
 
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
@@ -98,10 +96,9 @@ resource "aws_route_table" "public" {
     gateway_id = aws_internet_gateway.igw.id
   }
 
-  tags = {
-    Name        = "${var.project_name}-rt-public"
-    Environment = var.environment
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-rt-public"
+  })
 }
 
 resource "aws_route_table_association" "public" {
@@ -118,10 +115,9 @@ resource "aws_route_table" "private" {
     nat_gateway_id = aws_nat_gateway.nat_gw.id
   }
 
-  tags = {
-    Name        = "${var.project_name}-rt-private"
-    Environment = var.environment
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-rt-private"
+  })
 }
 
 resource "aws_route_table_association" "frontend_private" {
@@ -139,10 +135,9 @@ resource "aws_route_table_association" "backend_private" {
 resource "aws_route_table" "database" {
   vpc_id = aws_vpc.main.id
 
-  tags = {
-    Name        = "${var.project_name}-rt-db"
-    Environment = var.environment
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-rt-db"
+  })
 }
 
 resource "aws_route_table_association" "database" {
