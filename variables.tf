@@ -19,7 +19,7 @@ variable "environment" {
 variable "admin_ssh_ip" {
   type        = string
   description = "The public IP of the administrator for secure SSH access (Bastion)"
-  default     = "0.0.0.0/0" # In real usage, this should be restricted to e.g. "198.51.100.50/32"
+  default     = "0.0.0.0/0"
 }
 
 variable "key_name" {
@@ -34,20 +34,17 @@ variable "cors_origin" {
   default     = "https://fanvault.example.com"
 }
 
-# ── Secrets — supply via terraform.tfvars or TF_VAR_* env variables ──────────
-# These are stored as SecureString in SSM Parameter Store by the ssm module.
-# Never commit actual values to source control.
 
 variable "jwt_secret" {
   type        = string
-  description = "JWT access token signing secret — minimum 32 characters"
+  description = "JWT access token signing secret â€” minimum 32 characters"
   sensitive   = true
   default     = "CHANGE_ME_TO_A_RANDOM_32_PLUS_CHAR_STRING"
 }
 
 variable "jwt_refresh_secret" {
   type        = string
-  description = "JWT refresh token signing secret — different from jwt_secret"
+  description = "JWT refresh token signing secret â€” different from jwt_secret"
   sensitive   = true
   default     = "CHANGE_ME_TO_A_DIFFERENT_RANDOM_32_PLUS_CHAR_STRING"
 }

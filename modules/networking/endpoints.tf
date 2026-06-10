@@ -1,6 +1,3 @@
-# -----------------------------------------------------------------------------
-# VPC Gateway Endpoints (S3 and DynamoDB) — Free and Associated with Route Tables
-# -----------------------------------------------------------------------------
 
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.main.id
@@ -26,10 +23,6 @@ resource "aws_vpc_endpoint" "dynamodb" {
   }
 }
 
-# -----------------------------------------------------------------------------
-# VPC Interface Endpoints (SSM, SSMMessages, EC2Messages, Secrets Manager)
-# Deployed in backend private subnets for secure access.
-# -----------------------------------------------------------------------------
 
 resource "aws_vpc_endpoint" "ssm" {
   vpc_id              = aws_vpc.main.id

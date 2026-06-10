@@ -1,4 +1,3 @@
-# VPC Declaration
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_support   = true
@@ -10,7 +9,6 @@ resource "aws_vpc" "main" {
   }
 }
 
-# Internet Gateway
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
 
@@ -20,11 +18,7 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-# -----------------------------------------------------------------------------
-# Subnets
-# -----------------------------------------------------------------------------
 
-# Public Subnets (For ALB, NAT Gateway, and Bastion)
 resource "aws_subnet" "public" {
   count                   = 2
   vpc_id                  = aws_vpc.main.id
@@ -38,7 +32,6 @@ resource "aws_subnet" "public" {
   }
 }
 
-# Frontend Private Subnets (For Nginx Frontend Servers)
 resource "aws_subnet" "frontend_private" {
   count             = 2
   vpc_id            = aws_vpc.main.id
@@ -51,7 +44,6 @@ resource "aws_subnet" "frontend_private" {
   }
 }
 
-# Backend Private Subnets (For Express Application Instances)
 resource "aws_subnet" "backend_private" {
   count             = 2
   vpc_id            = aws_vpc.main.id
@@ -64,7 +56,6 @@ resource "aws_subnet" "backend_private" {
   }
 }
 
-# Database Private Subnets (For MongoDB EC2 Instance)
 resource "aws_subnet" "database_private" {
   count             = 2
   vpc_id            = aws_vpc.main.id
@@ -77,9 +68,6 @@ resource "aws_subnet" "database_private" {
   }
 }
 
-# -----------------------------------------------------------------------------
-# NAT Gateway Setup (Placed in public-1a)
-# -----------------------------------------------------------------------------
 resource "aws_eip" "nat_eip" {
   domain = "vpc"
 
@@ -91,7 +79,7 @@ resource "aws_eip" "nat_eip" {
 
 resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.nat_eip.id
-  subnet_id     = aws_subnet.public[0].id # Place in public-1a
+  subnet_id     = aws_subnet.public[0].id
 
   tags = {
     Name        = "${var.project_name}-nat-gw"
@@ -101,11 +89,7 @@ resource "aws_nat_gateway" "nat_gw" {
   depends_on = [aws_internet_gateway.igw]
 }
 
-# -----------------------------------------------------------------------------
-# Route Tables & Associations
-# -----------------------------------------------------------------------------
 
-# Public Route Table (pointing to IGW)
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
@@ -126,7 +110,6 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# Private Route Table (pointing to NAT Gateway)
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
@@ -141,7 +124,6 @@ resource "aws_route_table" "private" {
   }
 }
 
-# Associate Frontend and Backend Private subnets with Private Route Table
 resource "aws_route_table_association" "frontend_private" {
   count          = 2
   subnet_id      = aws_subnet.frontend_private[count.index].id
@@ -154,7 +136,6 @@ resource "aws_route_table_association" "backend_private" {
   route_table_id = aws_route_table.private.id
 }
 
-# Isolated Database Route Table (No NAT path for maximum data security)
 resource "aws_route_table" "database" {
   vpc_id = aws_vpc.main.id
 
