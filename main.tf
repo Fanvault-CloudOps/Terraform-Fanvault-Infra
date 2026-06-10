@@ -2,7 +2,7 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  cf_to_alb_header = "FanVaultSecureHeaderToken2026!"
+  cf_to_alb_header = var.cloudfront_to_alb_custom_header
 }
 
 module "networking" {
@@ -53,7 +53,7 @@ module "iam" {
 
   sns_kms_key_arn = "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*"
 
-  ssm_parameter_prefix = "/fanvault"
+  ssm_parameter_prefix = var.ssm_parameter_prefix
 
   s3_bucket_name_prefix = var.project_name
 
@@ -68,9 +68,9 @@ module "storage" {
   source                          = "./modules/storage"
   project_name                    = var.project_name
   environment                     = var.environment
-  billing_mode                    = "PAY_PER_REQUEST"
-  enable_pitr                     = true
-  enable_encryption               = true
+  billing_mode                    = var.dynamodb_billing_mode
+  enable_pitr                     = var.dynamodb_enable_pitr
+  enable_encryption               = var.dynamodb_enable_encryption
   lambda_role_arn                 = module.iam.lambda_role_arn
   cors_origin                     = var.cors_origin
   waf_web_acl_arn                 = module.governance.waf_web_acl_arn
@@ -84,8 +84,8 @@ module "configuration" {
   environment  = var.environment
   aws_region   = var.aws_region
 
-  git_repo_url = "https://github.com/Savitxr/Fanvault-v2.git"
-  git_branch   = "main"
+  git_repo_url = var.git_repo_url
+  git_branch   = var.git_branch
 
   cors_origin        = var.cors_origin
   jwt_secret         = var.jwt_secret

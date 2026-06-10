@@ -34,17 +34,16 @@ variable "cors_origin" {
   default     = "https://fanvault.example.com"
 }
 
-
 variable "jwt_secret" {
   type        = string
-  description = "JWT access token signing secret â€” minimum 32 characters"
+  description = "JWT access token signing secret — minimum 32 characters"
   sensitive   = true
   default     = "CHANGE_ME_TO_A_RANDOM_32_PLUS_CHAR_STRING"
 }
 
 variable "jwt_refresh_secret" {
   type        = string
-  description = "JWT refresh token signing secret â€” different from jwt_secret"
+  description = "JWT refresh token signing secret — different from jwt_secret"
   sensitive   = true
   default     = "CHANGE_ME_TO_A_DIFFERENT_RANDOM_32_PLUS_CHAR_STRING"
 }
@@ -67,4 +66,44 @@ variable "geo_blocked_countries" {
   default     = []
 }
 
+variable "git_repo_url" {
+  type        = string
+  description = "The HTTP clone URL of the application Git repository"
+  default     = "https://github.com/Savitxr/Fanvault-v2.git"
+}
 
+variable "git_branch" {
+  type        = string
+  description = "The target deployment branch of the application Git repository"
+  default     = "main"
+}
+
+variable "dynamodb_billing_mode" {
+  type        = string
+  description = "The billing mode for the DynamoDB tables (PROVISIONED or PAY_PER_REQUEST)"
+  default     = "PAY_PER_REQUEST"
+}
+
+variable "dynamodb_enable_pitr" {
+  type        = bool
+  description = "Whether to enable Point-in-Time Recovery (PITR) for the DynamoDB tables"
+  default     = true
+}
+
+variable "dynamodb_enable_encryption" {
+  type        = bool
+  description = "Whether to enable server-side encryption with KMS keys for the DynamoDB tables"
+  default     = true
+}
+
+variable "ssm_parameter_prefix" {
+  type        = string
+  description = "The prefix path for parameters stored in AWS Systems Manager Parameter Store"
+  default     = "/fanvault"
+}
+
+variable "cloudfront_to_alb_custom_header" {
+  type        = string
+  description = "The secret header token passed from CloudFront to ALB to verify request origin"
+  default     = "FanVaultSecureHeaderToken2026!"
+}
