@@ -198,26 +198,26 @@ module "monitoring" {
     lambda   = module.backend.lambda_tg_arn_suffix
   }
 
-  asg_names = [
-    module.backend.frontend_asg_name,
-    module.backend.backend_asg_name
-  ]
+  asgs = {
+    frontend = module.backend.frontend_asg_name
+    backend  = module.backend.backend_asg_name
+  }
 
   dynamodb_tables = module.storage.dynamodb_tables
 
-  lambda_functions = [
-    "${var.project_name}-audit-logging-consumer",
-    "${var.project_name}-thumbnail-generator-consumer",
-    "${var.project_name}-inventory-monitor-consumer",
-    module.storage.lambda_function_name
-  ]
+  lambdas = {
+    audit_logging       = "${var.project_name}-audit-logging-consumer"
+    thumbnail_generator = "${var.project_name}-thumbnail-generator-consumer"
+    inventory_monitor   = "${var.project_name}-inventory-monitor-consumer"
+    arch_page           = module.storage.lambda_function_name
+  }
 
-  sns_topics = [
-    "${var.project_name}-low-inventory-alerts",
-    "${var.project_name}-order-failure-alerts",
-    "${var.project_name}-product-upload-failures",
-    "${var.project_name}-admin-operational-alerts"
-  ]
+  sns_topics = {
+    low_inventory           = "${var.project_name}-low-inventory-alerts"
+    order_failure           = "${var.project_name}-order-failure-alerts"
+    product_upload_failure  = "${var.project_name}-product-upload-failures"
+    admin_operational_alert = "${var.project_name}-admin-operational-alerts"
+  }
 }
 
 
