@@ -78,6 +78,21 @@ variable "sns_topic_product_upload_failure_arn" {
   description = "ARN of the Product Upload Failures SNS topic"
   default     = ""
 }
+variable "eks_oidc_provider_arn" {
+  type        = string
+  description = "The ARN of the EKS OIDC provider"
+  default     = ""
+}
 
+variable "eks_oidc_provider_url" {
+  type        = string
+  description = "The URL of the EKS OIDC provider"
+  default     = ""
+}
 
+variable "enable_irsa" {
+  type        = bool
+  description = "Whether to create EKS IRSA resources"
+  default     = false
+}
 

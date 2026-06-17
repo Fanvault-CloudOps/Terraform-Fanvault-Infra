@@ -68,8 +68,6 @@ GIT_REPO=$(ssm_get "/fanvault/git/repo_url"            "https://github.com/Savit
 GIT_BRANCH=$(ssm_get "/fanvault/git/branch"             "main")
 CORS_ORIGIN=$(ssm_get "/fanvault/app/cors_origin"       "http://localhost")
 JWT_SECRET=$(ssm_get "/fanvault/app/jwt_secret"         "CHANGE_ME_MIN_32_CHARS")
-JWT_REFRESH_SECRET=$(ssm_get "/fanvault/app/jwt_refresh_secret" "CHANGE_ME_REFRESH_MIN_32")
-TABLE_USERS=$(ssm_get "/fanvault/dynamodb/table_users"    "fanvault-users")
 TABLE_PROFILES=$(ssm_get "/fanvault/dynamodb/table_profiles" "fanvault-profiles")
 TABLE_PRODUCTS=$(ssm_get "/fanvault/dynamodb/table_products" "fanvault-products")
 TABLE_ORDERS=$(ssm_get "/fanvault/dynamodb/table_orders"        "fanvault-orders")
@@ -86,7 +84,7 @@ SNS_PRODUCT_UPLOAD=$(ssm_get "/fanvault/sns/topic_product_upload_failure" "")
 SNS_ADMIN_OPERATIONAL=$(ssm_get "/fanvault/sns/topic_admin_operational_alert" "")
 
 echo "  Repo    : $GIT_REPO  (branch: $GIT_BRANCH)"
-echo "  DDB     : users=$TABLE_USERS | profiles=$TABLE_PROFILES"
+echo "  DDB     : profiles=$TABLE_PROFILES"
 echo "  DDB     : products=$TABLE_PRODUCTS | orders=$TABLE_ORDERS"
 
 # ── 5. Clone repo and install dependencies ────────────────────────────────────
@@ -96,10 +94,10 @@ rm -rf "$APP_BASE"
 mkdir -p "$APP_BASE"
 git clone --branch "$GIT_BRANCH" --depth 1 "$GIT_REPO" /tmp/fanvault-repo
 
-# ── Identity Service ──────────────────────────────────────────────────────────
-echo "  Installing fanvault-user-auth-service..."
-cp -r /tmp/fanvault-repo/fanvault-user-auth-service "$APP_BASE/fanvault-user-auth-service"
-cd "$APP_BASE/fanvault-user-auth-service"
+# ── User Service ──────────────────────────────────────────────────────────────
+echo "  Installing fanvault-user-service..."
+cp -r /tmp/fanvault-repo/fanvault-user-service "$APP_BASE/fanvault-user-service"
+cd "$APP_BASE/fanvault-user-service"
 npm install --omit=dev
 
 cat > .env << ENV
@@ -108,22 +106,18 @@ cat > .env << ENV
 NODE_ENV=production
 PORT=3001
 
-# DynamoDB (replaces MongoDB)
+# DynamoDB
 AWS_REGION=${AWS_REGION}
-DYNAMODB_TABLE_USERS=${TABLE_USERS}
 DYNAMODB_TABLE_PROFILES=${TABLE_PROFILES}
 
 # JWT
 JWT_SECRET=${JWT_SECRET}
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
-JWT_REFRESH_EXPIRES_IN=7d
 
 # CORS
 CORS_ORIGIN=${CORS_ORIGIN}
 ENV
 
-echo "  ✅ fanvault-user-auth-service configured."
+echo "  ✅ fanvault-user-service configured."
 
 # ── Commerce Service ──────────────────────────────────────────────────────────
 echo "  Installing fanvault-commerce-service..."
@@ -168,11 +162,11 @@ echo "  ✅ fanvault-commerce-service configured."
 echo "[6/7] Starting services via PM2..."
 cd "$APP_BASE"
 
-# Start Identity Service
+# Start User Service
 pm2 start src/index.js \
-    --name "fanvault-identity" \
-    --cwd fanvault-user-auth-service \
-    --log /var/log/fanvault-identity.log \
+    --name "fanvault-user" \
+    --cwd fanvault-user-service \
+    --log /var/log/fanvault-user.log \
     --time
 
 # Start Commerce Service
@@ -200,9 +194,9 @@ IDENTITY_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/hea
 COMMERCE_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/health)
 
 if [ "$IDENTITY_CODE" = "200" ]; then
-    echo "  ✅ Identity service  → HTTP $IDENTITY_CODE  (port 3001)"
+    echo "  ✅ User service  → HTTP $IDENTITY_CODE  (port 3001)"
 else
-    echo "  ❌ Identity service  → HTTP $IDENTITY_CODE  (port 3001) — check /var/log/fanvault-identity.log"
+    echo "  ❌ User service  → HTTP $IDENTITY_CODE  (port 3001) — check /var/log/fanvault-user.log"
 fi
 
 if [ "$COMMERCE_CODE" = "200" ]; then
