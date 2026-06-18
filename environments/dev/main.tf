@@ -89,7 +89,7 @@ module "ecr" {
   source           = "../../modules/ecr"
   project_name     = var.project_name
   environment      = var.environment
-  repository_names = ["frontend", "user-service", "commerce-service"]
+  repository_names = ["frontend", "user-service", "commerce-service", "ai-service"]
 }
 
 module "argocd" {

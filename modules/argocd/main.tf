@@ -12,7 +12,7 @@ resource "helm_release" "argocd" {
   }
 
   set {
-    name  = "server.extraArgs[0]"
-    value = "--insecure"
+    name  = "server.insecure"
+    value = "false"
   }
 }

@@ -1,6 +1,6 @@
 resource "aws_secretsmanager_secret" "secret" {
   name                    = "${var.project_name}-${var.environment}-app-secrets"
-  recovery_window_in_days = 0 # Forces immediate deletion if destroyed
+  recovery_window_in_days = 7
 
   tags = {
     Name        = "${var.project_name}-${var.environment}-secrets"
