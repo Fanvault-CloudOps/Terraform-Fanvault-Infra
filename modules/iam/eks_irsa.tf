@@ -20,7 +20,7 @@ data "aws_iam_policy_document" "eks_irsa_trust_user" {
       variable = "${replace(var.eks_oidc_provider_url, "https://", "")}:sub"
       # Trust both dev and prod namespaces for the user-service service account
       values = [
-        "system:serviceaccount:dev:user-service",
+        "system:serviceaccount:dev:dev-user-service",
         "system:serviceaccount:prod:user-service"
       ]
     }
@@ -50,7 +50,7 @@ data "aws_iam_policy_document" "eks_irsa_trust_commerce" {
       variable = "${replace(var.eks_oidc_provider_url, "https://", "")}:sub"
       # Trust both dev and prod namespaces for the commerce-service service account
       values = [
-        "system:serviceaccount:dev:commerce-service",
+        "system:serviceaccount:dev:dev-commerce-service",
         "system:serviceaccount:prod:commerce-service"
       ]
     }
