@@ -194,6 +194,7 @@ resource "aws_ssm_parameter" "s3_region" {
 
 # ── /fanvault/s3/cloudfront_url ──────────────────────────────────────────────
 resource "aws_ssm_parameter" "s3_cloudfront_url" {
+  count       = var.s3_cloudfront_url != "" ? 1 : 0
   name        = "/fanvault/s3/cloudfront_url"
   type        = "String"
   value       = var.s3_cloudfront_url
@@ -254,6 +255,7 @@ resource "aws_ssm_parameter" "eventbridge_bus_name" {
 
 # ── /fanvault/sns/topic_low_inventory ────────────────────────────────────────
 resource "aws_ssm_parameter" "sns_topic_low_inventory" {
+  count       = var.sns_topic_low_inventory != "" ? 1 : 0
   name        = "/fanvault/sns/topic_low_inventory"
   type        = "String"
   value       = var.sns_topic_low_inventory
@@ -269,6 +271,7 @@ resource "aws_ssm_parameter" "sns_topic_low_inventory" {
 
 # ── /fanvault/sns/topic_order_failure ────────────────────────────────────────
 resource "aws_ssm_parameter" "sns_topic_order_failure" {
+  count       = var.sns_topic_order_failure != "" ? 1 : 0
   name        = "/fanvault/sns/topic_order_failure"
   type        = "String"
   value       = var.sns_topic_order_failure
@@ -284,6 +287,7 @@ resource "aws_ssm_parameter" "sns_topic_order_failure" {
 
 # ── /fanvault/sns/topic_product_upload_failure ───────────────────────────────
 resource "aws_ssm_parameter" "sns_topic_product_upload_failure" {
+  count       = var.sns_topic_product_upload_failure != "" ? 1 : 0
   name        = "/fanvault/sns/topic_product_upload_failure"
   type        = "String"
   value       = var.sns_topic_product_upload_failure
@@ -299,6 +303,7 @@ resource "aws_ssm_parameter" "sns_topic_product_upload_failure" {
 
 # ── /fanvault/sns/topic_admin_operational_alert ──────────────────────────────
 resource "aws_ssm_parameter" "sns_topic_admin_operational_alert" {
+  count       = var.sns_topic_admin_operational_alert != "" ? 1 : 0
   name        = "/fanvault/sns/topic_admin_operational_alert"
   type        = "String"
   value       = var.sns_topic_admin_operational_alert
