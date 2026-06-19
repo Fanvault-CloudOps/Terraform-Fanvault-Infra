@@ -183,6 +183,40 @@ resource "aws_iam_policy" "commerce_dynamodb_policy" {
           "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.project_name}-admin-operational-alerts"
         ]
       },
+      {
+        Sid    = "SSMReadFanvaultParams"
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        Resource = [
+          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/fanvault/*"
+        ]
+      },
+      {
+        Sid    = "S3ProductImagesAccess"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.project_name}-product-images-*/*"
+        ]
+      },
+      {
+        Sid    = "S3ProductImagesBucketList"
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.project_name}-product-images-*"
+        ]
+      },
     ]
   })
 }
