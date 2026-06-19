@@ -312,4 +312,34 @@ resource "aws_ssm_parameter" "sns_topic_admin_operational_alert" {
   }
 }
 
+# ── /fanvault/cognito/user_pool_id ───────────────────────────────────────────
+resource "aws_ssm_parameter" "cognito_user_pool_id" {
+  count       = var.cognito_user_pool_id != "" ? 1 : 0
+  name        = "/fanvault/cognito/user_pool_id"
+  type        = "String"
+  value       = var.cognito_user_pool_id
+  description = "Cognito User Pool ID — read by user-service and commerce-service for JWT validation"
 
+  tags = {
+    Name        = "fanvault-cognito-user-pool-id"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}
+
+# ── /fanvault/cognito/client_id ───────────────────────────────────────────────
+resource "aws_ssm_parameter" "cognito_client_id" {
+  count       = var.cognito_client_id != "" ? 1 : 0
+  name        = "/fanvault/cognito/client_id"
+  type        = "String"
+  value       = var.cognito_client_id
+  description = "Cognito App Client ID — read by user-service for InitiateAuth and SignUp calls"
+
+  tags = {
+    Name        = "fanvault-cognito-client-id"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}

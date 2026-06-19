@@ -21,3 +21,15 @@ variable "github_repo" {
   default     = "Savitxr/Fanvault-v2"
   description = "GitHub repository for OIDC trust relationship"
 }
+
+variable "jwt_secret" {
+  type        = string
+  description = "JWT access token signing secret (minimum 32 chars)"
+  sensitive   = true
+}
+
+variable "jwt_refresh_secret" {
+  type        = string
+  description = "JWT refresh token signing secret (minimum 32 chars, must differ from jwt_secret)"
+  sensitive   = true
+}

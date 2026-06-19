@@ -130,4 +130,15 @@ variable "sns_topic_admin_operational_alert" {
   default     = ""
 }
 
+variable "cognito_user_pool_id" {
+  type        = string
+  description = "Cognito User Pool ID for the FanVault application"
+  default     = ""
+}
+
+variable "cognito_client_id" {
+  type        = string
+  description = "Cognito App Client ID for the FanVault application"
+  default     = ""
+}
 
