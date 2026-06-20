@@ -194,7 +194,6 @@ resource "aws_ssm_parameter" "s3_region" {
 
 # ── /fanvault/s3/cloudfront_url ──────────────────────────────────────────────
 resource "aws_ssm_parameter" "s3_cloudfront_url" {
-  count       = var.s3_cloudfront_url != "" ? 1 : 0
   name        = "/fanvault/s3/cloudfront_url"
   type        = "String"
   value       = var.s3_cloudfront_url
@@ -210,7 +209,6 @@ resource "aws_ssm_parameter" "s3_cloudfront_url" {
 
 # ── /fanvault/<env>/s3/cloudfront_url — environment-scoped path ──────────────
 resource "aws_ssm_parameter" "s3_cloudfront_url_env" {
-  count       = var.s3_cloudfront_url != "" ? 1 : 0
   name        = "/fanvault/${var.environment}/s3/cloudfront_url"
   type        = "String"
   value       = var.s3_cloudfront_url
