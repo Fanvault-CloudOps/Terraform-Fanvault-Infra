@@ -39,6 +39,15 @@ module "s3" {
   account_id   = data.aws_caller_identity.current.account_id
 }
 
+module "cloudfront" {
+  source                         = "../../modules/cloudfront"
+  project_name                   = var.project_name
+  environment                    = var.environment
+  s3_bucket_id                   = module.s3.bucket_name
+  s3_bucket_arn                  = module.s3.bucket_arn
+  s3_bucket_regional_domain_name = module.s3.bucket_regional_domain_name
+}
+
 module "secrets_manager" {
   source       = "../../modules/secrets_manager"
   project_name = var.project_name
@@ -96,4 +105,32 @@ module "argocd" {
   source              = "../../modules/argocd"
   argocd_helm_version = "7.1.3"
   depends_on          = [module.eks]
+}
+
+module "configuration" {
+  source       = "../../modules/configuration"
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+
+  # JWT secrets — SecureString parameters, supplied via tfvars
+  jwt_secret         = var.jwt_secret
+  jwt_refresh_secret = var.jwt_refresh_secret
+
+  # Cognito — wired from module.cognito outputs
+  cognito_user_pool_id = module.cognito.user_pool_id
+  cognito_client_id    = module.cognito.client_id
+
+  # DynamoDB table names — wired from module.dynamodb outputs
+  dynamodb_table_profiles   = module.dynamodb.profiles_table_name
+  dynamodb_table_products   = module.dynamodb.products_table_name
+  dynamodb_table_orders     = module.dynamodb.orders_table_name
+  dynamodb_table_audit_logs = module.dynamodb.audit_logs_table_name
+  dynamodb_table_metadata   = module.dynamodb.metadata_table_name
+
+  # S3 bucket + CloudFront — wired from module outputs
+  s3_bucket_name    = module.s3.bucket_name
+  s3_cloudfront_url = module.cloudfront.domain_name
+
+  # EventBridge and SNS — defaults match actual resource names
 }

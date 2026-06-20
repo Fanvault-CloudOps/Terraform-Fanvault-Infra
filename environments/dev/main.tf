@@ -39,6 +39,15 @@ module "s3" {
   account_id   = data.aws_caller_identity.current.account_id
 }
 
+module "cloudfront" {
+  source                         = "../../modules/cloudfront"
+  project_name                   = var.project_name
+  environment                    = var.environment
+  s3_bucket_id                   = module.s3.bucket_name
+  s3_bucket_arn                  = module.s3.bucket_arn
+  s3_bucket_regional_domain_name = module.s3.bucket_regional_domain_name
+}
+
 module "secrets_manager" {
   source       = "../../modules/secrets_manager"
   project_name = var.project_name
@@ -122,7 +131,7 @@ module "configuration" {
 
   # S3 bucket — wired from module.s3 output
   s3_bucket_name    = module.s3.bucket_name
-  s3_cloudfront_url = "" # CloudFront not deployed in dev
+  s3_cloudfront_url = module.cloudfront.domain_name
 
   # EventBridge and SNS — defaults match actual resource names (fanvault-event-bus, etc.)
 }

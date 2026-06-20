@@ -208,6 +208,22 @@ resource "aws_ssm_parameter" "s3_cloudfront_url" {
   }
 }
 
+# ── /fanvault/<env>/s3/cloudfront_url — environment-scoped path ──────────────
+resource "aws_ssm_parameter" "s3_cloudfront_url_env" {
+  count       = var.s3_cloudfront_url != "" ? 1 : 0
+  name        = "/fanvault/${var.environment}/s3/cloudfront_url"
+  type        = "String"
+  value       = var.s3_cloudfront_url
+  description = "CloudFront distribution domain for ${var.environment} product images"
+
+  tags = {
+    Name        = "fanvault-${var.environment}-s3-cloudfront-url"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}
+
 # ── /fanvault/dynamodb/table_audit_logs ──────────────────────────────────────
 resource "aws_ssm_parameter" "table_audit_logs" {
   name        = "/fanvault/dynamodb/table_audit_logs"
