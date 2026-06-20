@@ -18,7 +18,7 @@ variable "environment" {
 
 variable "github_repo" {
   type        = string
-  default     = "Savitxr/Fanvault-v2"
+  default     = "Fanvault-CloudOps/Fanvault-v3-App"
   description = "GitHub repository for OIDC trust relationship"
 }
 

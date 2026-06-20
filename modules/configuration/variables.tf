@@ -16,7 +16,7 @@ variable "environment" {
 variable "git_repo_url" {
   type        = string
   description = "Git repository URL for cloning the FanVault v2 application"
-  default     = "https://github.com/Savitxr/Fanvault-v2.git"
+  default     = "https://github.com/Fanvault-CloudOps/Fanvault-v3-App.git"
 }
 
 variable "git_branch" {

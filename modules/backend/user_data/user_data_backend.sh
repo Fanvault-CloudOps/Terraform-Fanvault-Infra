@@ -64,7 +64,7 @@ ssm_get() {
         --output text 2>/dev/null || echo "${2:-}"
 }
 
-GIT_REPO=$(ssm_get "/fanvault/git/repo_url"            "https://github.com/Savitxr/Fanvault-v2.git")
+GIT_REPO=$(ssm_get "/fanvault/git/repo_url"            "https://github.com/Fanvault-CloudOps/Fanvault-v3-App.git")
 GIT_BRANCH=$(ssm_get "/fanvault/git/branch"             "main")
 CORS_ORIGIN=$(ssm_get "/fanvault/app/cors_origin"       "http://localhost")
 JWT_SECRET=$(ssm_get "/fanvault/app/jwt_secret"         "CHANGE_ME_MIN_32_CHARS")

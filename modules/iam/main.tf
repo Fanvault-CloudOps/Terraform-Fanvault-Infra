@@ -308,7 +308,7 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
       variable = "token.actions.githubusercontent.com:sub"
       values = [
         "repo:${var.github_repo}:*",
-        "repo:Savitxr/Fanvault-v2:*"
+        "repo:Fanvault-CloudOps/Fanvault-v3-App:*"
       ]
     }
   }

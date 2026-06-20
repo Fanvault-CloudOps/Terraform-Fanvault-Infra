@@ -36,8 +36,8 @@ variable "s3_bucket_name_prefix" {
 
 variable "github_repo" {
   type        = string
-  description = "GitHub repository name in the format 'owner/repo' (e.g. 'Savitxr/Fanvault-v2')"
-  default     = "Savitxr/Fanvault-v2"
+  description = "GitHub repository name in the format 'owner/repo' (e.g. 'Fanvault-CloudOps/Fanvault-v3-App')"
+  default     = "Fanvault-CloudOps/Fanvault-v3-App"
 }
 
 variable "sns_topic_arns" {

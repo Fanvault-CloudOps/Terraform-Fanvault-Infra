@@ -50,8 +50,8 @@ variable "jwt_refresh_secret" {
 
 variable "github_repo" {
   type        = string
-  description = "GitHub repository name in the format 'owner/repo' (e.g. 'Savitxr/Fanvault-v2')"
-  default     = "Savitxr/Fanvault-v2"
+  description = "GitHub repository name in the format 'owner/repo' (e.g. 'Fanvault-CloudOps/Fanvault-v3-App')"
+  default     = "Fanvault-CloudOps/Fanvault-v3-App"
 }
 
 variable "alert_email" {
@@ -69,7 +69,7 @@ variable "geo_blocked_countries" {
 variable "git_repo_url" {
   type        = string
   description = "The HTTP clone URL of the application Git repository"
-  default     = "https://github.com/Savitxr/Fanvault-v2.git"
+  default     = "https://github.com/Fanvault-CloudOps/Fanvault-v3-App.git"
 }
 
 variable "git_branch" {
