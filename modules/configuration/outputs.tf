@@ -18,11 +18,11 @@ output "jwt_refresh_secret_arn" {
 }
 
 output "cognito_user_pool_id_arn" {
-  value       = length(aws_ssm_parameter.cognito_user_pool_id) > 0 ? aws_ssm_parameter.cognito_user_pool_id[0].arn : null
+  value       = aws_ssm_parameter.cognito_user_pool_id.arn
   description = "ARN of the Cognito User Pool ID SSM parameter"
 }
 
 output "cognito_client_id_arn" {
-  value       = length(aws_ssm_parameter.cognito_client_id) > 0 ? aws_ssm_parameter.cognito_client_id[0].arn : null
+  value       = aws_ssm_parameter.cognito_client_id.arn
   description = "ARN of the Cognito App Client ID SSM parameter"
 }

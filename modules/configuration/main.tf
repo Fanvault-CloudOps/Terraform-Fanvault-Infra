@@ -269,7 +269,7 @@ resource "aws_ssm_parameter" "eventbridge_bus_name" {
 
 # ── /fanvault/sns/topic_low_inventory ────────────────────────────────────────
 resource "aws_ssm_parameter" "sns_topic_low_inventory" {
-  count       = var.sns_topic_low_inventory != "" ? 1 : 0
+  count       = var.create_sns_ssm_parameters ? 1 : 0
   name        = "/fanvault/sns/topic_low_inventory"
   type        = "String"
   value       = var.sns_topic_low_inventory
@@ -285,7 +285,7 @@ resource "aws_ssm_parameter" "sns_topic_low_inventory" {
 
 # ── /fanvault/sns/topic_order_failure ────────────────────────────────────────
 resource "aws_ssm_parameter" "sns_topic_order_failure" {
-  count       = var.sns_topic_order_failure != "" ? 1 : 0
+  count       = var.create_sns_ssm_parameters ? 1 : 0
   name        = "/fanvault/sns/topic_order_failure"
   type        = "String"
   value       = var.sns_topic_order_failure
@@ -301,7 +301,7 @@ resource "aws_ssm_parameter" "sns_topic_order_failure" {
 
 # ── /fanvault/sns/topic_product_upload_failure ───────────────────────────────
 resource "aws_ssm_parameter" "sns_topic_product_upload_failure" {
-  count       = var.sns_topic_product_upload_failure != "" ? 1 : 0
+  count       = var.create_sns_ssm_parameters ? 1 : 0
   name        = "/fanvault/sns/topic_product_upload_failure"
   type        = "String"
   value       = var.sns_topic_product_upload_failure
@@ -317,7 +317,7 @@ resource "aws_ssm_parameter" "sns_topic_product_upload_failure" {
 
 # ── /fanvault/sns/topic_admin_operational_alert ──────────────────────────────
 resource "aws_ssm_parameter" "sns_topic_admin_operational_alert" {
-  count       = var.sns_topic_admin_operational_alert != "" ? 1 : 0
+  count       = var.create_sns_ssm_parameters ? 1 : 0
   name        = "/fanvault/sns/topic_admin_operational_alert"
   type        = "String"
   value       = var.sns_topic_admin_operational_alert
@@ -333,7 +333,6 @@ resource "aws_ssm_parameter" "sns_topic_admin_operational_alert" {
 
 # ── /fanvault/cognito/user_pool_id ───────────────────────────────────────────
 resource "aws_ssm_parameter" "cognito_user_pool_id" {
-  count       = var.cognito_user_pool_id != "" ? 1 : 0
   name        = "/fanvault/cognito/user_pool_id"
   type        = "String"
   value       = var.cognito_user_pool_id
@@ -349,7 +348,6 @@ resource "aws_ssm_parameter" "cognito_user_pool_id" {
 
 # ── /fanvault/cognito/client_id ───────────────────────────────────────────────
 resource "aws_ssm_parameter" "cognito_client_id" {
-  count       = var.cognito_client_id != "" ? 1 : 0
   name        = "/fanvault/cognito/client_id"
   type        = "String"
   value       = var.cognito_client_id

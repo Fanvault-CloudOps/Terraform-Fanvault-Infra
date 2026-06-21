@@ -130,6 +130,12 @@ variable "sns_topic_admin_operational_alert" {
   default     = ""
 }
 
+variable "create_sns_ssm_parameters" {
+  type        = bool
+  description = "Set to true when SNS topics exist and their ARNs should be written to SSM. Must be a literal bool — never derived from a resource output."
+  default     = false
+}
+
 variable "cognito_user_pool_id" {
   type        = string
   description = "Cognito User Pool ID for the FanVault application"
