@@ -8,7 +8,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "fanvault-v2-tfstate-899071933396"
+    bucket         = "fanvault-v2-tfstate-773384830607" # MANUAL ACTION: create this bucket before running terraform init on root module
     key            = "fanvault-v2/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "fanvault-v2-tfstate-locks"
