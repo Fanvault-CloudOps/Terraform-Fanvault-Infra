@@ -79,7 +79,7 @@ resource "aws_cognito_user_pool_client" "client" {
 }
 
 resource "aws_cognito_user_pool_domain" "domain" {
-  domain       = "${var.project_name}-${var.environment}-auth"
+  domain       = "${var.project_name}-${var.environment}-auth${var.domain_suffix != "" ? "-${var.domain_suffix}" : ""}"
   user_pool_id = aws_cognito_user_pool.pool.id
 }
 

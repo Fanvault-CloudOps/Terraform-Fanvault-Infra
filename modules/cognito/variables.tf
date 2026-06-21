@@ -19,3 +19,9 @@ variable "logout_urls" {
   description = "List of allowed logout URLs for the identity provider client"
   default     = ["http://localhost/logout"]
 }
+
+variable "domain_suffix" {
+  type        = string
+  description = "Optional suffix appended to the Cognito domain to ensure global uniqueness (e.g. account ID last 4 digits)"
+  default     = ""
+}

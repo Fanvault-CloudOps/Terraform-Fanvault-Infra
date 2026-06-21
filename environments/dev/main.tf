@@ -67,6 +67,7 @@ module "cognito" {
   environment   = var.environment
   callback_urls = ["http://localhost:3000"]
   logout_urls   = ["http://localhost:3000"]
+  domain_suffix = substr(data.aws_caller_identity.current.account_id, length(data.aws_caller_identity.current.account_id) - 3, 4)
 }
 
 module "iam" {
