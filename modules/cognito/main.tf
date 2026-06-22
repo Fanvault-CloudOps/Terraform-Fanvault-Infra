@@ -60,6 +60,7 @@ resource "aws_cognito_user_pool" "pool" {
   tags = {
     Project     = var.project_name
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 

@@ -22,3 +22,9 @@ variable "enable_encryption" {
   type        = bool
   default     = true
 }
+
+variable "owner" {
+  type        = string
+  description = "Owner tag for all resources in this module"
+  default     = "platform-team"
+}

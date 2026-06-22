@@ -1,6 +1,7 @@
 aws_region                      = "us-east-1"
 project_name                    = "fanvault"
 environment                     = "production"
+owner                           = "platform-team"
 admin_ssh_ip                    = "0.0.0.0/0"
 key_name                        = "fanvault-key"
 cors_origin                     = "https://fanvault.example.com"

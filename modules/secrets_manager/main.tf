@@ -5,6 +5,7 @@ resource "aws_secretsmanager_secret" "secret" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-secrets"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
   }
 }

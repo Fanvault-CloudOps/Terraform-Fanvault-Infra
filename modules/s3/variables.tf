@@ -18,3 +18,9 @@ variable "cors_allowed_origins" {
   description = "Origins allowed to upload directly to S3 via presigned URLs"
   default     = ["*"]
 }
+
+variable "owner" {
+  type        = string
+  description = "Owner tag for all resources in this module"
+  default     = "platform-team"
+}

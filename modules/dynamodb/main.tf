@@ -19,6 +19,7 @@ resource "aws_dynamodb_table" "profiles" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-profiles"
     Environment = var.environment
+    Owner       = var.owner
     Service     = "fanvault-user-service"
   }
 }
@@ -72,6 +73,7 @@ resource "aws_dynamodb_table" "products" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-products"
     Environment = var.environment
+    Owner       = var.owner
     Service     = "fanvault-commerce-service"
   }
 }
@@ -137,6 +139,7 @@ resource "aws_dynamodb_table" "orders" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-orders"
     Environment = var.environment
+    Owner       = var.owner
     Service     = "fanvault-commerce-service"
   }
 }
@@ -196,6 +199,7 @@ resource "aws_dynamodb_table" "audit_logs" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-audit-logs"
     Environment = var.environment
+    Owner       = var.owner
     Service     = "fanvault-commerce-service"
   }
 }
@@ -227,6 +231,7 @@ resource "aws_dynamodb_table" "metadata" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-metadata"
     Environment = var.environment
+    Owner       = var.owner
     Service     = "fanvault-commerce-service"
   }
 }

@@ -33,3 +33,9 @@ variable "availability_zones" {
   description = "List of availability zones to distribute subnets"
   default     = ["us-east-1a", "us-east-1b"]
 }
+
+variable "owner" {
+  type        = string
+  description = "Owner tag for all resources in this module"
+  default     = "platform-team"
+}

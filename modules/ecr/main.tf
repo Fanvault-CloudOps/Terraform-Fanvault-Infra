@@ -14,6 +14,7 @@ resource "aws_ecr_repository" "repo" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-${each.key}-repo"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
   }
 }

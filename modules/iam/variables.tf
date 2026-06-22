@@ -96,3 +96,9 @@ variable "enable_irsa" {
   default     = false
 }
 
+
+variable "owner" {
+  type        = string
+  description = "Owner tag for all resources in this module"
+  default     = "platform-team"
+}

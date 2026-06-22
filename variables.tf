@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "owner" {
+  type        = string
+  description = "Owner tag applied to all resources for resource governance"
+  default     = "platform-team"
+}
+
 variable "project_name" {
   type        = string
   description = "A standard prefix for resources created by this project"

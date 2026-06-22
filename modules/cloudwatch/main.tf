@@ -5,6 +5,7 @@ resource "aws_cloudwatch_log_group" "eks_logs" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-cloudwatch"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
   }
 }

@@ -4,6 +4,7 @@ resource "aws_s3_bucket" "bucket" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-product-images"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
   }
 }

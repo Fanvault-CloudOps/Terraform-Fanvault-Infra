@@ -41,3 +41,9 @@ variable "instance_types" {
   description = "Instance types for node group"
   default     = ["t3.medium"]
 }
+
+variable "cluster_version" {
+  type        = string
+  description = "Kubernetes version for the EKS cluster (must be 1.29+)"
+  default     = "1.35"
+}

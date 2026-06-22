@@ -6,6 +6,7 @@ resource "aws_vpc" "main" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-vpc"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -17,6 +18,7 @@ resource "aws_internet_gateway" "igw" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-igw"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
   }
 }
@@ -31,6 +33,7 @@ resource "aws_subnet" "public" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-public-${var.availability_zones[count.index]}"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     "kubernetes.io/role/elb" = "1"
   }
@@ -45,6 +48,7 @@ resource "aws_subnet" "private" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-private-${var.availability_zones[count.index]}"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     "kubernetes.io/role/internal-elb" = "1"
   }
@@ -59,6 +63,7 @@ resource "aws_subnet" "database" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-db-${var.availability_zones[count.index]}"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
   }
 }
@@ -68,6 +73,7 @@ resource "aws_eip" "nat" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-nat-eip"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
   }
 }
@@ -79,6 +85,7 @@ resource "aws_nat_gateway" "nat" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-nat-gw"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
   }
 
@@ -96,6 +103,7 @@ resource "aws_route_table" "public" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-rt-public"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
   }
 }
@@ -117,6 +125,7 @@ resource "aws_route_table" "private" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-rt-private"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
   }
 }
@@ -132,6 +141,7 @@ resource "aws_route_table" "database" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-rt-db"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
   }
 }

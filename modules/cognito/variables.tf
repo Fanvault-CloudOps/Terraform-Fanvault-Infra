@@ -25,3 +25,9 @@ variable "domain_suffix" {
   description = "Optional suffix appended to the Cognito domain to ensure global uniqueness (e.g. account ID last 4 digits)"
   default     = ""
 }
+
+variable "owner" {
+  type        = string
+  description = "Owner tag for all resources in this module"
+  default     = "platform-team"
+}

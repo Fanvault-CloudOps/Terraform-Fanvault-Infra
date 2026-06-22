@@ -41,6 +41,7 @@ resource "aws_cloudfront_distribution" "product_images" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-cdn"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
   }
 }

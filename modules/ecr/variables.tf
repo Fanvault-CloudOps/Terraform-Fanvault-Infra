@@ -13,3 +13,9 @@ variable "repository_names" {
   description = "List of repository names to create"
   default     = ["frontend", "user-service", "commerce-service"]
 }
+
+variable "owner" {
+  type        = string
+  description = "Owner tag for all resources in this module"
+  default     = "platform-team"
+}

@@ -33,6 +33,7 @@ resource "aws_iam_role" "lambda_s3_read" {
   tags = {
     Name        = "${var.project_name}-lambda-role"
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 
@@ -172,6 +173,7 @@ resource "aws_iam_role" "ec2_backend" {
   tags = {
     Name        = "${var.project_name}-ec2-backend-role"
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 
@@ -213,6 +215,7 @@ resource "aws_iam_instance_profile" "ec2_backend" {
   tags = {
     Name        = "${var.project_name}-ec2-backend-profile"
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 
@@ -231,6 +234,7 @@ resource "aws_iam_role" "ec2_frontend" {
   tags = {
     Name        = "${var.project_name}-ec2-frontend-role"
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 
@@ -274,6 +278,7 @@ resource "aws_iam_instance_profile" "ec2_frontend" {
   tags = {
     Name        = "${var.project_name}-ec2-frontend-profile"
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 
@@ -322,6 +327,7 @@ resource "aws_iam_role" "github_actions" {
   tags = {
     Name        = "${var.project_name}-github-actions-role"
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 
