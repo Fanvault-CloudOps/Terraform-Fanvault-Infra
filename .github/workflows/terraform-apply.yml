@@ -37,7 +37,7 @@ permissions:
 
 # ─── Global env ──────────────────────────────────────────────────────────────
 env:
-  TF_VERSION: '1.9.8'
+  TF_VERSION: '1.15.6'
   TF_WORKING_DIR: environments/dev   # override with workflow_dispatch.environment when needed
   AWS_REGION: us-east-1
   TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
@@ -133,6 +133,10 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # Create cache dir first — actions/cache restore requires the path to exist
+      - name: Create plugin cache dir
+        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
       # Cache provider binaries to speed up init across runs
       - name: Cache Terraform providers
         uses: actions/cache@v4.2.3
@@ -140,9 +144,6 @@ jobs:
           path: ${{ env.TF_PLUGIN_CACHE_DIR }}
           key: ${{ runner.os }}-tf-${{ hashFiles(format('{0}/.terraform.lock.hcl', env.TF_WORKING_DIR)) }}
           restore-keys: ${{ runner.os }}-tf-
-
-      - name: Create plugin cache dir
-        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
       # fmt — check formatting without modifying files
       - name: terraform fmt
@@ -291,6 +292,10 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # Create cache dir first — actions/cache restore requires the path to exist
+      - name: Create plugin cache dir
+        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
       # Restore cached providers so init doesn't re-download
       - name: Restore Terraform provider cache
         uses: actions/cache@v4.2.3
@@ -298,9 +303,6 @@ jobs:
           path: ${{ env.TF_PLUGIN_CACHE_DIR }}
           key: ${{ runner.os }}-tf-${{ hashFiles(format('{0}/.terraform.lock.hcl', env.TF_WORKING_DIR)) }}
           restore-keys: ${{ runner.os }}-tf-
-
-      - name: Create plugin cache dir
-        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
       - name: terraform init
         run: terraform init -input=false
