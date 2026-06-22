@@ -1,8 +1,4 @@
-# =============================================================================
-# State Migration Map (Refactoring Module Structure)
-# =============================================================================
 
-# ── Module renames ───────────────────────────────────────────────────────────
 
 moved {
   from = module.vpc
@@ -39,7 +35,6 @@ moved {
   to   = module.event_processing
 }
 
-# ── S3 & CloudFront resources (migrating from s3_lambda to storage module) ──────
 
 moved {
   from = module.s3_lambda.aws_s3_bucket.architecture
@@ -116,7 +111,6 @@ moved {
   to   = module.storage.aws_lambda_function.arch_page
 }
 
-# ── IAM resources (relocating from event_driven / sns to iam module) ───────────
 
 moved {
   from = module.event_driven.aws_iam_role.lambda_consumers

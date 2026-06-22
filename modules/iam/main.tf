@@ -33,6 +33,7 @@ resource "aws_iam_role" "lambda_s3_read" {
   tags = {
     Name        = "${var.project_name}-lambda-role"
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 
@@ -172,6 +173,7 @@ resource "aws_iam_role" "ec2_backend" {
   tags = {
     Name        = "${var.project_name}-ec2-backend-role"
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 
@@ -213,6 +215,7 @@ resource "aws_iam_instance_profile" "ec2_backend" {
   tags = {
     Name        = "${var.project_name}-ec2-backend-profile"
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 
@@ -231,6 +234,7 @@ resource "aws_iam_role" "ec2_frontend" {
   tags = {
     Name        = "${var.project_name}-ec2-frontend-role"
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 
@@ -274,6 +278,7 @@ resource "aws_iam_instance_profile" "ec2_frontend" {
   tags = {
     Name        = "${var.project_name}-ec2-frontend-profile"
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 
@@ -306,7 +311,10 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:*"]
+      values = [
+        "repo:${var.github_repo}:*",
+        "repo:Fanvault-CloudOps/Fanvault-v3-App:*"
+      ]
     }
   }
 }
@@ -319,6 +327,7 @@ resource "aws_iam_role" "github_actions" {
   tags = {
     Name        = "${var.project_name}-github-actions-role"
     Environment = var.environment
+    Owner       = var.owner
   }
 }
 
@@ -343,30 +352,39 @@ data "aws_iam_policy_document" "backend_eventbridge" {
   }
 }
 
-# Grant SNS publishing and KMS decryption permissions to the backend EC2 role
+# Grant SNS publishing and KMS decryption permissions to the backend EC2 role.
+# The resource is skipped entirely when no SNS ARNs or KMS key are provided,
+# preventing MalformedPolicyDocument from empty/missing Resource values.
 resource "aws_iam_role_policy" "backend_sns" {
+  count  = (length(var.sns_topic_arns) > 0 || var.sns_kms_key_arn != "") ? 1 : 0
   name   = "${var.project_name}-backend-sns-policy"
   role   = aws_iam_role.ec2_backend.id
   policy = data.aws_iam_policy_document.backend_sns.json
 }
 
 data "aws_iam_policy_document" "backend_sns" {
-  statement {
-    sid       = "SNSPublishAlerts"
-    effect    = "Allow"
-    actions   = ["sns:Publish"]
-    resources = var.sns_topic_arns
+  dynamic "statement" {
+    for_each = length(var.sns_topic_arns) > 0 ? [1] : []
+    content {
+      sid       = "SNSPublishAlerts"
+      effect    = "Allow"
+      actions   = ["sns:Publish"]
+      resources = var.sns_topic_arns
+    }
   }
 
-  statement {
-    sid    = "KMSDecryptSNS"
-    effect = "Allow"
-    actions = [
-      "kms:Decrypt",
-      "kms:GenerateDataKey*",
-      "kms:DescribeKey"
-    ]
-    resources = [var.sns_kms_key_arn]
+  dynamic "statement" {
+    for_each = var.sns_kms_key_arn != "" ? [1] : []
+    content {
+      sid    = "KMSDecryptSNS"
+      effect = "Allow"
+      actions = [
+        "kms:Decrypt",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+      ]
+      resources = [var.sns_kms_key_arn]
+    }
   }
 }
 

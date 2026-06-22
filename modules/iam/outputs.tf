@@ -49,6 +49,12 @@ output "sns_feedback_role_arn" {
   value       = aws_iam_role.sns_feedback_role.arn
   description = "ARN of the SNS CloudWatch feedback execution role"
 }
+output "user_irsa_role_arn" {
+  value       = length(aws_iam_role.user_irsa) > 0 ? aws_iam_role.user_irsa[0].arn : ""
+  description = "ARN of the User Service EKS IRSA role"
+}
 
-
-
+output "commerce_irsa_role_arn" {
+  value       = length(aws_iam_role.commerce_irsa) > 0 ? aws_iam_role.commerce_irsa[0].arn : ""
+  description = "ARN of the Commerce Service EKS IRSA role"
+}

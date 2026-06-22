@@ -36,8 +36,8 @@ variable "s3_bucket_name_prefix" {
 
 variable "github_repo" {
   type        = string
-  description = "GitHub repository name in the format 'owner/repo' (e.g. 'Savitxr/Fanvault-v2')"
-  default     = "Savitxr/Fanvault-v2"
+  description = "GitHub repository name in the format 'owner/repo' (e.g. 'Fanvault-CloudOps/Fanvault-v3-App')"
+  default     = "Fanvault-CloudOps/Fanvault-v3-App"
 }
 
 variable "sns_topic_arns" {
@@ -78,6 +78,27 @@ variable "sns_topic_product_upload_failure_arn" {
   description = "ARN of the Product Upload Failures SNS topic"
   default     = ""
 }
+variable "eks_oidc_provider_arn" {
+  type        = string
+  description = "The ARN of the EKS OIDC provider"
+  default     = ""
+}
+
+variable "eks_oidc_provider_url" {
+  type        = string
+  description = "The URL of the EKS OIDC provider"
+  default     = ""
+}
+
+variable "enable_irsa" {
+  type        = bool
+  description = "Whether to create EKS IRSA resources"
+  default     = false
+}
 
 
-
+variable "owner" {
+  type        = string
+  description = "Owner tag for all resources in this module"
+  default     = "platform-team"
+}

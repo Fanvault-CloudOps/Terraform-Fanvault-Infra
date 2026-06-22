@@ -35,59 +35,61 @@ resource "aws_iam_role_policy" "lambda_resources" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "DynamoDBReadWriteAccess"
-        Effect = "Allow"
-        Action = [
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem",
-          "dynamodb:GetItem",
-          "dynamodb:Scan",
-          "dynamodb:Query"
-        ]
-        Resource = [
-          var.dynamodb_table_audit_logs_arn,
-          var.dynamodb_table_products_arn,
-          "${var.dynamodb_table_products_arn}/index/*"
-        ]
-      },
-      {
-        Sid    = "S3Access"
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:ListBucket"
-        ]
-        Resource = [
-          var.s3_bucket_product_images_arn,
-          "${var.s3_bucket_product_images_arn}/*"
-        ]
-      },
-      {
-        Sid    = "SNSPublishAccess"
-        Effect = "Allow"
-        Action = [
-          "sns:Publish"
-        ]
-        Resource = [
-          var.sns_topic_low_inventory_arn,
-          var.sns_topic_product_upload_failure_arn
-        ]
-      },
-      {
-        Sid    = "KMSDecryptSNS"
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt",
-          "kms:GenerateDataKey*",
-          "kms:DescribeKey"
-        ]
-        Resource = [
-          var.sns_kms_key_arn
-        ]
-      }
-    ]
+    Statement = concat(
+      [
+        {
+          Sid    = "DynamoDBReadWriteAccess"
+          Effect = "Allow"
+          Action = [
+            "dynamodb:PutItem",
+            "dynamodb:UpdateItem",
+            "dynamodb:GetItem",
+            "dynamodb:Scan",
+            "dynamodb:Query"
+          ]
+          Resource = [
+            var.dynamodb_table_audit_logs_arn,
+            var.dynamodb_table_products_arn,
+            "${var.dynamodb_table_products_arn}/index/*"
+          ]
+        },
+        {
+          Sid    = "S3Access"
+          Effect = "Allow"
+          Action = [
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:ListBucket"
+          ]
+          Resource = [
+            var.s3_bucket_product_images_arn,
+            "${var.s3_bucket_product_images_arn}/*"
+          ]
+        },
+      ],
+      length(compact([var.sns_topic_low_inventory_arn, var.sns_topic_product_upload_failure_arn])) > 0 ? [
+        {
+          Sid    = "SNSPublishAccess"
+          Effect = "Allow"
+          Action = ["sns:Publish"]
+          Resource = compact([
+            var.sns_topic_low_inventory_arn,
+            var.sns_topic_product_upload_failure_arn,
+          ])
+        }
+      ] : [],
+      var.sns_kms_key_arn != "" ? [
+        {
+          Sid    = "KMSDecryptSNS"
+          Effect = "Allow"
+          Action = [
+            "kms:Decrypt",
+            "kms:GenerateDataKey*",
+            "kms:DescribeKey"
+          ]
+          Resource = [var.sns_kms_key_arn]
+        }
+      ] : []
+    )
   })
 }

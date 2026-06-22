@@ -24,6 +24,7 @@ resource "aws_ssm_parameter" "git_repo_url" {
   tags = {
     Name        = "fanvault-git-repo-url"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -39,6 +40,7 @@ resource "aws_ssm_parameter" "git_branch" {
   tags = {
     Name        = "fanvault-git-branch"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -54,6 +56,7 @@ resource "aws_ssm_parameter" "cors_origin" {
   tags = {
     Name        = "fanvault-cors-origin"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -75,6 +78,7 @@ resource "aws_ssm_parameter" "jwt_secret" {
   tags = {
     Name        = "fanvault-jwt-secret"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
     Sensitive   = "true"
@@ -96,6 +100,7 @@ resource "aws_ssm_parameter" "jwt_refresh_secret" {
   tags = {
     Name        = "fanvault-jwt-refresh-secret"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
     Sensitive   = "true"
@@ -112,6 +117,7 @@ resource "aws_ssm_parameter" "table_users" {
   tags = {
     Name        = "fanvault-ddb-table-users"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -127,6 +133,7 @@ resource "aws_ssm_parameter" "table_profiles" {
   tags = {
     Name        = "fanvault-ddb-table-profiles"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -142,6 +149,7 @@ resource "aws_ssm_parameter" "table_products" {
   tags = {
     Name        = "fanvault-ddb-table-products"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -157,6 +165,7 @@ resource "aws_ssm_parameter" "table_orders" {
   tags = {
     Name        = "fanvault-ddb-table-orders"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -172,6 +181,7 @@ resource "aws_ssm_parameter" "s3_bucket" {
   tags = {
     Name        = "fanvault-s3-bucket"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -187,6 +197,7 @@ resource "aws_ssm_parameter" "s3_region" {
   tags = {
     Name        = "fanvault-s3-region"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -202,6 +213,23 @@ resource "aws_ssm_parameter" "s3_cloudfront_url" {
   tags = {
     Name        = "fanvault-s3-cloudfront-url"
     Environment = var.environment
+    Owner       = var.owner
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}
+
+# ── /fanvault/<env>/s3/cloudfront_url — environment-scoped path ──────────────
+resource "aws_ssm_parameter" "s3_cloudfront_url_env" {
+  name        = "/fanvault/${var.environment}/s3/cloudfront_url"
+  type        = "String"
+  value       = var.s3_cloudfront_url
+  description = "CloudFront distribution domain for ${var.environment} product images"
+
+  tags = {
+    Name        = "fanvault-${var.environment}-s3-cloudfront-url"
+    Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -217,6 +245,7 @@ resource "aws_ssm_parameter" "table_audit_logs" {
   tags = {
     Name        = "fanvault-ddb-table-audit-logs"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -232,6 +261,7 @@ resource "aws_ssm_parameter" "table_metadata" {
   tags = {
     Name        = "fanvault-ddb-table-metadata"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -247,6 +277,7 @@ resource "aws_ssm_parameter" "eventbridge_bus_name" {
   tags = {
     Name        = "fanvault-eb-bus-name"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -254,6 +285,7 @@ resource "aws_ssm_parameter" "eventbridge_bus_name" {
 
 # ── /fanvault/sns/topic_low_inventory ────────────────────────────────────────
 resource "aws_ssm_parameter" "sns_topic_low_inventory" {
+  count       = var.create_sns_ssm_parameters ? 1 : 0
   name        = "/fanvault/sns/topic_low_inventory"
   type        = "String"
   value       = var.sns_topic_low_inventory
@@ -262,6 +294,7 @@ resource "aws_ssm_parameter" "sns_topic_low_inventory" {
   tags = {
     Name        = "fanvault-sns-topic-low-inventory"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -269,6 +302,7 @@ resource "aws_ssm_parameter" "sns_topic_low_inventory" {
 
 # ── /fanvault/sns/topic_order_failure ────────────────────────────────────────
 resource "aws_ssm_parameter" "sns_topic_order_failure" {
+  count       = var.create_sns_ssm_parameters ? 1 : 0
   name        = "/fanvault/sns/topic_order_failure"
   type        = "String"
   value       = var.sns_topic_order_failure
@@ -277,6 +311,7 @@ resource "aws_ssm_parameter" "sns_topic_order_failure" {
   tags = {
     Name        = "fanvault-sns-topic-order-failure"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -284,6 +319,7 @@ resource "aws_ssm_parameter" "sns_topic_order_failure" {
 
 # ── /fanvault/sns/topic_product_upload_failure ───────────────────────────────
 resource "aws_ssm_parameter" "sns_topic_product_upload_failure" {
+  count       = var.create_sns_ssm_parameters ? 1 : 0
   name        = "/fanvault/sns/topic_product_upload_failure"
   type        = "String"
   value       = var.sns_topic_product_upload_failure
@@ -292,6 +328,7 @@ resource "aws_ssm_parameter" "sns_topic_product_upload_failure" {
   tags = {
     Name        = "fanvault-sns-topic-product-upload-failure"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
@@ -299,6 +336,7 @@ resource "aws_ssm_parameter" "sns_topic_product_upload_failure" {
 
 # ── /fanvault/sns/topic_admin_operational_alert ──────────────────────────────
 resource "aws_ssm_parameter" "sns_topic_admin_operational_alert" {
+  count       = var.create_sns_ssm_parameters ? 1 : 0
   name        = "/fanvault/sns/topic_admin_operational_alert"
   type        = "String"
   value       = var.sns_topic_admin_operational_alert
@@ -307,9 +345,40 @@ resource "aws_ssm_parameter" "sns_topic_admin_operational_alert" {
   tags = {
     Name        = "fanvault-sns-topic-admin-operational-alert"
     Environment = var.environment
+    Owner       = var.owner
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
 }
 
+# ── /fanvault/cognito/user_pool_id ───────────────────────────────────────────
+resource "aws_ssm_parameter" "cognito_user_pool_id" {
+  name        = "/fanvault/cognito/user_pool_id"
+  type        = "String"
+  value       = var.cognito_user_pool_id
+  description = "Cognito User Pool ID — read by user-service and commerce-service for JWT validation"
 
+  tags = {
+    Name        = "fanvault-cognito-user-pool-id"
+    Environment = var.environment
+    Owner       = var.owner
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}
+
+# ── /fanvault/cognito/client_id ───────────────────────────────────────────────
+resource "aws_ssm_parameter" "cognito_client_id" {
+  name        = "/fanvault/cognito/client_id"
+  type        = "String"
+  value       = var.cognito_client_id
+  description = "Cognito App Client ID — read by user-service for InitiateAuth and SignUp calls"
+
+  tags = {
+    Name        = "fanvault-cognito-client-id"
+    Environment = var.environment
+    Owner       = var.owner
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+  }
+}

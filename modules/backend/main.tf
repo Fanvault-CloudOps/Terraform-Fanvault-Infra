@@ -132,7 +132,6 @@ resource "aws_lb_target_group" "commerce" {
 resource "aws_lb_target_group" "lambda" {
   name        = "${var.project_name}-lambda-tg"
   target_type = "lambda"
-  # vpc_id      = var.vpc_id
 
   tags = {
     Name        = "${var.project_name}-lambda-tg"

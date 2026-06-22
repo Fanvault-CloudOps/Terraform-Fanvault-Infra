@@ -23,7 +23,7 @@ apt-get install -y curl git nginx unzip awscli
 # The EC2 Instance Profile must have ssm:GetParameter on /fanvault/* paths.
 echo "[2/6] Fetching deployment configuration from SSM..."
 AWS_REGION="${aws_region:-us-east-1}"
-GIT_REPO=$(aws ssm get-parameter --region "$AWS_REGION" --name "/fanvault/git/repo_url" --query "Parameter.Value" --output text 2>/dev/null || echo "https://github.com/Savitxr/Fanvault-v2.git")
+GIT_REPO=$(aws ssm get-parameter --region "$AWS_REGION" --name "/fanvault/git/repo_url" --query "Parameter.Value" --output text 2>/dev/null || echo "https://github.com/Fanvault-CloudOps/Fanvault-v3-App.git")
 GIT_BRANCH=$(aws ssm get-parameter --region "$AWS_REGION" --name "/fanvault/git/branch" --query "Parameter.Value" --output text 2>/dev/null || echo "main")
 
 echo "  Repo   : $GIT_REPO"

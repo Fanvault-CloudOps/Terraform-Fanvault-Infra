@@ -16,7 +16,7 @@ variable "environment" {
 variable "git_repo_url" {
   type        = string
   description = "Git repository URL for cloning the FanVault v2 application"
-  default     = "https://github.com/Savitxr/Fanvault-v2.git"
+  default     = "https://github.com/Fanvault-CloudOps/Fanvault-v3-App.git"
 }
 
 variable "git_branch" {
@@ -130,4 +130,27 @@ variable "sns_topic_admin_operational_alert" {
   default     = ""
 }
 
+variable "create_sns_ssm_parameters" {
+  type        = bool
+  description = "Set to true when SNS topics exist and their ARNs should be written to SSM. Must be a literal bool — never derived from a resource output."
+  default     = false
+}
 
+variable "cognito_user_pool_id" {
+  type        = string
+  description = "Cognito User Pool ID for the FanVault application"
+  default     = ""
+}
+
+variable "cognito_client_id" {
+  type        = string
+  description = "Cognito App Client ID for the FanVault application"
+  default     = ""
+}
+
+
+variable "owner" {
+  type        = string
+  description = "Owner tag for all resources in this module"
+  default     = "platform-team"
+}

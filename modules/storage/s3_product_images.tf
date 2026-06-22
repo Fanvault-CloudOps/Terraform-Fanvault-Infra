@@ -72,7 +72,7 @@ resource "aws_s3_bucket_cors_configuration" "product_images_cors" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["PUT", "POST", "GET", "HEAD"]
-    allowed_origins = ["*"] # Allow all origins for development/testing; restrict in production
+    allowed_origins = ["*"]
     expose_headers  = ["ETag"]
     max_age_seconds = 3000
   }

@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "owner" {
+  type        = string
+  description = "Owner tag applied to all resources for resource governance"
+  default     = "platform-team"
+}
+
 variable "project_name" {
   type        = string
   description = "A standard prefix for resources created by this project"
@@ -19,7 +25,7 @@ variable "environment" {
 variable "admin_ssh_ip" {
   type        = string
   description = "The public IP of the administrator for secure SSH access (Bastion)"
-  default     = "0.0.0.0/0" # In real usage, this should be restricted to e.g. "198.51.100.50/32"
+  default     = "0.0.0.0/0"
 }
 
 variable "key_name" {
@@ -33,10 +39,6 @@ variable "cors_origin" {
   description = "Allowed CORS origin for both backend services (e.g. https://fanvault.example.com)"
   default     = "https://fanvault.example.com"
 }
-
-# ── Secrets — supply via terraform.tfvars or TF_VAR_* env variables ──────────
-# These are stored as SecureString in SSM Parameter Store by the ssm module.
-# Never commit actual values to source control.
 
 variable "jwt_secret" {
   type        = string
@@ -54,8 +56,8 @@ variable "jwt_refresh_secret" {
 
 variable "github_repo" {
   type        = string
-  description = "GitHub repository name in the format 'owner/repo' (e.g. 'Savitxr/Fanvault-v2')"
-  default     = "Savitxr/Fanvault-v2"
+  description = "GitHub repository name in the format 'owner/repo' (e.g. 'Fanvault-CloudOps/Fanvault-v3-App')"
+  default     = "Fanvault-CloudOps/Fanvault-v3-App"
 }
 
 variable "alert_email" {
@@ -70,4 +72,44 @@ variable "geo_blocked_countries" {
   default     = []
 }
 
+variable "git_repo_url" {
+  type        = string
+  description = "The HTTP clone URL of the application Git repository"
+  default     = "https://github.com/Fanvault-CloudOps/Fanvault-v3-App.git"
+}
 
+variable "git_branch" {
+  type        = string
+  description = "The target deployment branch of the application Git repository"
+  default     = "main"
+}
+
+variable "dynamodb_billing_mode" {
+  type        = string
+  description = "The billing mode for the DynamoDB tables (PROVISIONED or PAY_PER_REQUEST)"
+  default     = "PAY_PER_REQUEST"
+}
+
+variable "dynamodb_enable_pitr" {
+  type        = bool
+  description = "Whether to enable Point-in-Time Recovery (PITR) for the DynamoDB tables"
+  default     = true
+}
+
+variable "dynamodb_enable_encryption" {
+  type        = bool
+  description = "Whether to enable server-side encryption with KMS keys for the DynamoDB tables"
+  default     = true
+}
+
+variable "ssm_parameter_prefix" {
+  type        = string
+  description = "The prefix path for parameters stored in AWS Systems Manager Parameter Store"
+  default     = "/fanvault"
+}
+
+variable "cloudfront_to_alb_custom_header" {
+  type        = string
+  description = "The secret header token passed from CloudFront to ALB to verify request origin"
+  default     = "FanVaultSecureHeaderToken2026!"
+}
