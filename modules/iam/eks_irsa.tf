@@ -287,9 +287,9 @@ resource "aws_iam_policy" "ai_service_policy" {
         ]
         Resource = [
           # Cross-region inference profile (us.* prefix routes to optimal region)
-          "arn:aws:bedrock:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0",
+          "arn:aws:bedrock:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:inference-profile/us.amazon.nova-pro-v1:0",
           # Underlying foundation model that the inference profile routes to
-          "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0"
+          "arn:aws:bedrock:*::foundation-model/amazon.nova-pro-v1:0"
         ]
       },
       {
