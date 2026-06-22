@@ -10,11 +10,13 @@ resource "aws_eks_cluster" "cluster" {
     endpoint_public_access  = true
   }
 
-  # API_AND_CONFIG_MAP: keeps existing aws-auth ConfigMap entries working
-  # while enabling the Access Entries API (required for CI role to reach the cluster).
-  # This is a one-way upgrade — cannot revert to CONFIG_MAP only.
+  # Upgrade auth mode so the Access Entries API works alongside aws-auth ConfigMap.
+  # bootstrap_cluster_creator_admin_permissions MUST be set explicitly here — omitting
+  # it causes Terraform to read the stored value (true) and plan true->null, which is
+  # ForceNew and would destroy the running cluster.
   access_config {
-    authentication_mode = "API_AND_CONFIG_MAP"
+    authentication_mode                         = "API_AND_CONFIG_MAP"
+    bootstrap_cluster_creator_admin_permissions = true
   }
 
   depends_on = [
