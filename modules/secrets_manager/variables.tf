@@ -14,7 +14,6 @@ variable "secret_values" {
   default     = {
     jwt_secret         = "placeholder-secret-replace-in-console-or-cicd"
     jwt_refresh_secret = "placeholder-refresh-secret-replace-in-console-or-cicd"
-    openai_api_key     = "placeholder-replace-with-actual-openai-key"
   }
   sensitive   = true
 }
