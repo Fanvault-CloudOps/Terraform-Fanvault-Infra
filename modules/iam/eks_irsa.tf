@@ -281,9 +281,15 @@ resource "aws_iam_policy" "ai_service_policy" {
       {
         Sid    = "BedrockInvokeModel"
         Effect = "Allow"
-        Action = ["bedrock:InvokeModel"]
+        Action = [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream"
+        ]
         Resource = [
-          "arn:aws:bedrock:${data.aws_region.current.name}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
+          # Cross-region inference profile (us.* prefix routes to optimal region)
+          "arn:aws:bedrock:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0",
+          # Underlying foundation model that the inference profile routes to
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0"
         ]
       },
       {
