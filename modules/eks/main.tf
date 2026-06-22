@@ -10,6 +10,13 @@ resource "aws_eks_cluster" "cluster" {
     endpoint_public_access  = true
   }
 
+  # API_AND_CONFIG_MAP: keeps existing aws-auth ConfigMap entries working
+  # while enabling the Access Entries API (required for CI role to reach the cluster).
+  # This is a one-way upgrade — cannot revert to CONFIG_MAP only.
+  access_config {
+    authentication_mode = "API_AND_CONFIG_MAP"
+  }
+
   depends_on = [
     aws_iam_role_policy_attachment.cluster_policy
   ]
