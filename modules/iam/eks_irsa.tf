@@ -204,7 +204,7 @@ resource "aws_iam_policy" "commerce_dynamodb_policy" {
           "s3:DeleteObject"
         ]
         Resource = [
-          "arn:aws:s3:::${var.project_name}-product-images-*/*"
+          "arn:aws:s3:::${var.project_name}-${var.environment}-product-images-*/*"
         ]
       },
       {
@@ -214,7 +214,7 @@ resource "aws_iam_policy" "commerce_dynamodb_policy" {
           "s3:ListBucket"
         ]
         Resource = [
-          "arn:aws:s3:::${var.project_name}-product-images-*"
+          "arn:aws:s3:::${var.project_name}-${var.environment}-product-images-*"
         ]
       },
     ]
@@ -303,7 +303,7 @@ resource "aws_iam_policy" "ai_service_policy" {
         Effect = "Allow"
         Action = ["s3:GetObject"]
         Resource = [
-          "arn:aws:s3:::${var.project_name}-product-images-*/*"
+          "arn:aws:s3:::${var.project_name}-${var.environment}-product-images-*/*"
         ]
       },
       {
