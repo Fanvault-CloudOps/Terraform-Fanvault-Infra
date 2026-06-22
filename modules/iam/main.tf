@@ -348,7 +348,7 @@ data "aws_iam_policy_document" "backend_eventbridge" {
     sid       = "EventBridgePutEvents"
     effect    = "Allow"
     actions   = ["events:PutEvents"]
-    resources = ["arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:event-bus/${var.project_name}-event-bus"]
+    resources = ["arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:event-bus/${var.project_name}-${var.environment}-event-bus"]
   }
 }
 

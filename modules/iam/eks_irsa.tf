@@ -112,6 +112,32 @@ resource "aws_iam_role_policy_attachment" "user_dynamodb_attach" {
   policy_arn = aws_iam_policy.user_dynamodb_policy[0].arn
 }
 
+resource "aws_iam_policy" "user_secrets_policy" {
+  count       = var.enable_irsa ? 1 : 0
+  name        = "${var.project_name}-user-secrets-policy"
+  description = "Allows user-service to read app secrets from Secrets Manager (production mode)"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "SecretsManagerReadAppSecrets"
+        Effect = "Allow"
+        Action = ["secretsmanager:GetSecretValue"]
+        Resource = [
+          "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}-*-app-secrets*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "user_secrets_attach" {
+  count      = var.enable_irsa ? 1 : 0
+  role       = aws_iam_role.user_irsa[0].name
+  policy_arn = aws_iam_policy.user_secrets_policy[0].arn
+}
+
 
 # ── 2. Commerce Service IRSA Role ─────────────────────────────────────────────
 resource "aws_iam_role" "commerce_irsa" {
@@ -217,6 +243,14 @@ resource "aws_iam_policy" "commerce_dynamodb_policy" {
           "arn:aws:s3:::${var.project_name}-${var.environment}-product-images-*"
         ]
       },
+      {
+        Sid    = "SecretsManagerReadAppSecrets"
+        Effect = "Allow"
+        Action = ["secretsmanager:GetSecretValue"]
+        Resource = [
+          "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}-*-app-secrets*"
+        ]
+      }
     ]
   })
 }

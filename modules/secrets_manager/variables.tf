@@ -11,11 +11,11 @@ variable "environment" {
 variable "secret_values" {
   type        = map(string)
   description = "Initial secret key-value pairs"
-  default     = {
+  default = {
     jwt_secret         = "placeholder-secret-replace-in-console-or-cicd"
     jwt_refresh_secret = "placeholder-refresh-secret-replace-in-console-or-cicd"
   }
-  sensitive   = true
+  sensitive = true
 }
 
 variable "owner" {

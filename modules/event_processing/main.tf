@@ -2,10 +2,10 @@
 # EventBridge Bus
 # -----------------------------------------------------------------------------
 resource "aws_cloudwatch_event_bus" "commerce_bus" {
-  name = "${var.project_name}-event-bus"
+  name = "${var.project_name}-${var.environment}-event-bus"
 
   tags = {
-    Name        = "${var.project_name}-event-bus"
+    Name        = "${var.project_name}-${var.environment}-event-bus"
     Environment = var.environment
   }
 }
@@ -14,12 +14,12 @@ resource "aws_cloudwatch_event_bus" "commerce_bus" {
 # SQS Dead-Letter Queue (DLQ) for failed EventBridge targets
 # -----------------------------------------------------------------------------
 resource "aws_sqs_queue" "event_dlq" {
-  name                      = "${var.project_name}-event-dlq"
+  name                      = "${var.project_name}-${var.environment}-event-dlq"
   message_retention_seconds = 1209600 # 14 days
   receive_wait_time_seconds = 20
 
   tags = {
-    Name        = "${var.project_name}-event-dlq"
+    Name        = "${var.project_name}-${var.environment}-event-dlq"
     Environment = var.environment
   }
 }
@@ -122,7 +122,7 @@ EOF
 
 resource "aws_lambda_function" "audit_logging" {
   filename         = data.archive_file.audit_logging.output_path
-  function_name    = "${var.project_name}-audit-logging-consumer"
+  function_name    = "${var.project_name}-${var.environment}-audit-logging-consumer"
   role             = var.lambda_role_arn
   handler          = "index.handler"
   runtime          = "nodejs20.x"
@@ -136,7 +136,7 @@ resource "aws_lambda_function" "audit_logging" {
   }
 
   tags = {
-    Name        = "${var.project_name}-audit-logging-consumer"
+    Name        = "${var.project_name}-${var.environment}-audit-logging-consumer"
     Environment = var.environment
   }
 }
@@ -286,7 +286,7 @@ EOF
 
 resource "aws_lambda_function" "thumbnail_generator" {
   filename         = data.archive_file.thumbnail_generator.output_path
-  function_name    = "${var.project_name}-thumbnail-generator-consumer"
+  function_name    = "${var.project_name}-${var.environment}-thumbnail-generator-consumer"
   role             = var.lambda_role_arn
   handler          = "index.handler"
   runtime          = "nodejs20.x"
@@ -302,7 +302,7 @@ resource "aws_lambda_function" "thumbnail_generator" {
   }
 
   tags = {
-    Name        = "${var.project_name}-thumbnail-generator-consumer"
+    Name        = "${var.project_name}-${var.environment}-thumbnail-generator-consumer"
     Environment = var.environment
   }
 }
@@ -385,7 +385,7 @@ EOF
 
 resource "aws_lambda_function" "inventory_monitor" {
   filename         = data.archive_file.inventory_monitor.output_path
-  function_name    = "${var.project_name}-inventory-monitor-consumer"
+  function_name    = "${var.project_name}-${var.environment}-inventory-monitor-consumer"
   role             = var.lambda_role_arn
   handler          = "index.handler"
   runtime          = "nodejs20.x"
@@ -399,7 +399,7 @@ resource "aws_lambda_function" "inventory_monitor" {
   }
 
   tags = {
-    Name        = "${var.project_name}-inventory-monitor-consumer"
+    Name        = "${var.project_name}-${var.environment}-inventory-monitor-consumer"
     Environment = var.environment
   }
 }
@@ -410,7 +410,7 @@ resource "aws_lambda_function" "inventory_monitor" {
 
 # Rule 1: Route all commerce events to Audit Logging Consumer
 resource "aws_cloudwatch_event_rule" "audit_logging" {
-  name           = "${var.project_name}-audit-logging-rule"
+  name           = "${var.project_name}-${var.environment}-audit-logging-rule"
   description    = "Route all commerce domain events to the Audit Logging Lambda"
   event_bus_name = aws_cloudwatch_event_bus.commerce_bus.name
 
@@ -445,7 +445,7 @@ resource "aws_lambda_permission" "audit_logging" {
 
 # Rule 2: Route ProductCreated/Updated to Thumbnail Generation Consumer
 resource "aws_cloudwatch_event_rule" "thumbnail_generator" {
-  name           = "${var.project_name}-thumbnail-generator-rule"
+  name           = "${var.project_name}-${var.environment}-thumbnail-generator-rule"
   description    = "Route ProductCreated/ProductUpdated events to the Thumbnail Generator Lambda"
   event_bus_name = aws_cloudwatch_event_bus.commerce_bus.name
 
@@ -481,7 +481,7 @@ resource "aws_lambda_permission" "thumbnail_generator" {
 
 # Rule 3: Route InventoryLow to Inventory Monitoring Consumer
 resource "aws_cloudwatch_event_rule" "inventory_monitor" {
-  name           = "${var.project_name}-inventory-monitor-rule"
+  name           = "${var.project_name}-${var.environment}-inventory-monitor-rule"
   description    = "Route InventoryLow events to the Inventory Monitor Lambda"
   event_bus_name = aws_cloudwatch_event_bus.commerce_bus.name
 
@@ -517,7 +517,7 @@ resource "aws_lambda_permission" "inventory_monitor" {
 
 # Rule 4: Route InventoryLow events directly to SNS Low Inventory Alerts topic
 resource "aws_cloudwatch_event_rule" "low_inventory_sns" {
-  name           = "${var.project_name}-low-inventory-sns-rule"
+  name           = "${var.project_name}-${var.environment}-low-inventory-sns-rule"
   description    = "Route InventoryLow events directly to SNS Low Inventory Alerts topic"
   event_bus_name = aws_cloudwatch_event_bus.commerce_bus.name
 

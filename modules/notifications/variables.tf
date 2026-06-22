@@ -16,6 +16,7 @@ variable "alert_email" {
 
 variable "sns_feedback_role_arn" {
   type        = string
-  description = "ARN of the IAM role used for SNS CloudWatch logging feedback"
+  description = "ARN of the IAM role used for SNS CloudWatch logging feedback (optional)"
+  default     = null
 }
 
