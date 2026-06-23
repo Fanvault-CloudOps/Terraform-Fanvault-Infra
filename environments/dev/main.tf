@@ -17,9 +17,9 @@ module "eks" {
   environment        = var.environment
   vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
-  desired_capacity   = 2
-  max_capacity       = 3
-  min_capacity       = 1
+  desired_capacity   = 3
+  max_capacity       = 4
+  min_capacity       = 3
   instance_types     = ["t3.medium"]
 }
 
