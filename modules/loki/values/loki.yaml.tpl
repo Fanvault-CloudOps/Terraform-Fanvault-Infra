@@ -27,7 +27,9 @@ loki:
     retention_delete_worker_count: 150
     delete_request_store: filesystem
 
-  schema_config:
+  # Helm chart v6.x validate.yaml checks for schemaConfig (camelCase).
+  # The chart template converts this to schema_config in the rendered Loki config.
+  schemaConfig:
     configs:
       - from: "2024-01-01"
         store: tsdb

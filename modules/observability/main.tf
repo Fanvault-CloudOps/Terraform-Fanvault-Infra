@@ -45,6 +45,7 @@ resource "helm_release" "kube_prometheus_stack" {
   version          = var.kube_prometheus_stack_version
   namespace        = "monitoring"
   create_namespace = true
+  cleanup_on_fail  = true
   timeout          = 600
 
   values = [templatefile("${path.module}/values/kube-prometheus-stack.yaml.tpl", local.helm_vars)]

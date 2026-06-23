@@ -7,6 +7,7 @@ resource "null_resource" "ec2_node_class" {
     node_role_name = var.node_iam_role_name
     project_name   = var.project_name
     environment    = var.environment
+    ami_selector   = "al2023@latest"
   }
 
   provisioner "local-exec" {
@@ -17,7 +18,11 @@ resource "null_resource" "ec2_node_class" {
       metadata:
         name: ${var.project_name}-default
       spec:
-        amiFamily: AL2023
+        # Karpenter v1 API removed amiFamily as a standalone field.
+        # amiSelectorTerms with alias is the replacement — alias: al2023@latest
+        # resolves to the latest EKS-optimised AL2023 AMI for the cluster version.
+        amiSelectorTerms:
+          - alias: al2023@latest
         role: ${var.node_iam_role_name}
         subnetSelectorTerms:
           - tags:

@@ -3,6 +3,17 @@
 
 fullnameOverride: "kube-prometheus-stack"
 
+## ── Prometheus Operator ────────────────────────────────────────────────────────
+# Admission webhooks require a pre-install Job pod which can't schedule on
+# t3.medium nodes at max pod density (17 pods/node ENI limit). Disabled for dev.
+prometheusOperator:
+  admissionWebhooks:
+    enabled: false
+    patch:
+      enabled: false
+  tls:
+    enabled: false
+
 ## ── Prometheus ────────────────────────────────────────────────────────────────
 prometheus:
   prometheusSpec:
