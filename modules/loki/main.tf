@@ -9,7 +9,7 @@ resource "helm_release" "loki" {
   chart            = "loki"
   version          = var.loki_version
   namespace        = "monitoring"
-  create_namespace = false
+  create_namespace = true
   timeout          = 300
 
   values = [templatefile("${path.module}/values/loki.yaml.tpl", {
@@ -25,7 +25,7 @@ resource "helm_release" "promtail" {
   chart            = "promtail"
   version          = var.promtail_version
   namespace        = "monitoring"
-  create_namespace = false
+  create_namespace = true
   timeout          = 180
 
   values = [templatefile("${path.module}/values/promtail.yaml.tpl", {

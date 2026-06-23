@@ -1,6 +1,11 @@
 ## Loki Helm values — SingleBinary mode for single-cluster deployment
 ## Template variables: storage_size, retention_hours
 
+# Explicitly declare SingleBinary deployment mode. Without this the chart's
+# validate.yaml rejects the config when scalable-mode defaults (backend/read/write)
+# still have replicas > 0.
+deploymentMode: SingleBinary
+
 loki:
   auth_enabled: false
 
@@ -47,6 +52,17 @@ singleBinary:
     limits:
       cpu: 500m
       memory: 1Gi
+
+# Zero out scalable-mode components — required when deploymentMode is SingleBinary
+# to satisfy the chart's validate.yaml mutual-exclusion check.
+backend:
+  replicas: 0
+
+read:
+  replicas: 0
+
+write:
+  replicas: 0
 
 # Disable self-monitoring to reduce resource usage in dev
 monitoring:
