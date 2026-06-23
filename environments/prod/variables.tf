@@ -52,8 +52,3 @@ variable "prometheus_retention_days" {
   default     = 30
 }
 
-variable "loki_retention_hours" {
-  type        = number
-  description = "Loki log retention in hours (720 = 30 days)"
-  default     = 720
-}

@@ -139,16 +139,6 @@ grafana:
     datasources:
       enabled: true
 
-  # Pre-provision Loki datasource
-  additionalDataSources:
-    - name: Loki
-      type: loki
-      url: http://loki:3100
-      access: proxy
-      isDefault: false
-      jsonData:
-        maxLines: 1000
-
   # Grafana.ini overrides
   grafana.ini:
     server:

@@ -263,17 +263,6 @@ module "observability" {
   depends_on = [module.eks_addons, module.notifications]
 }
 
-module "loki" {
-  source       = "../../modules/loki"
-  project_name = var.project_name
-  environment  = var.environment
-  cluster_name = module.eks.cluster_name
-
-  loki_retention_hours = var.loki_retention_hours
-  loki_storage_size    = "20Gi"
-
-  depends_on = [module.eks_addons]
-}
 
 module "karpenter" {
   source                = "../../modules/karpenter"
