@@ -22,3 +22,13 @@ output "oidc_provider_url" {
   value       = aws_iam_openid_connect_provider.oidc.url
   description = "The URL of the OIDC provider for IRSA"
 }
+
+output "node_role_name" {
+  value       = aws_iam_role.node_role.name
+  description = "Name of the EKS node IAM role (used by Karpenter EC2NodeClass)"
+}
+
+output "node_role_arn" {
+  value       = aws_iam_role.node_role.arn
+  description = "ARN of the EKS node IAM role"
+}

@@ -357,3 +357,121 @@ resource "aws_iam_role_policy_attachment" "ai_service_policy_attach" {
   role       = aws_iam_role.ai_irsa[0].name
   policy_arn = aws_iam_policy.ai_service_policy[0].arn
 }
+
+# ── 4. CloudWatch Agent IRSA Role ─────────────────────────────────────────────
+# Used by the amazon-cloudwatch-observability EKS addon (Container Insights + Fluent Bit)
+data "aws_iam_policy_document" "eks_irsa_trust_cloudwatch_agent" {
+  count = var.enable_irsa ? 1 : 0
+
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [var.eks_oidc_provider_arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(var.eks_oidc_provider_url, "https://", "")}:sub"
+      values   = ["system:serviceaccount:amazon-cloudwatch:cloudwatch-agent"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(var.eks_oidc_provider_url, "https://", "")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "cloudwatch_agent_irsa" {
+  count              = var.enable_irsa ? 1 : 0
+  name               = "${var.project_name}-cloudwatch-agent-irsa-role"
+  assume_role_policy = data.aws_iam_policy_document.eks_irsa_trust_cloudwatch_agent[0].json
+  description        = "IRSA role for CloudWatch Agent (Container Insights + Fluent Bit)"
+
+  tags = {
+    Name        = "${var.project_name}-cloudwatch-agent-irsa-role"
+    Environment = var.environment
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent_server_policy" {
+  count      = var.enable_irsa ? 1 : 0
+  role       = aws_iam_role.cloudwatch_agent_irsa[0].name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+# ── 5. Alertmanager SNS IRSA Role ─────────────────────────────────────────────
+# Used by kube-prometheus-stack Alertmanager to publish alerts to SNS via sigv4
+data "aws_iam_policy_document" "eks_irsa_trust_alertmanager" {
+  count = var.enable_irsa ? 1 : 0
+
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [var.eks_oidc_provider_arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(var.eks_oidc_provider_url, "https://", "")}:sub"
+      values   = ["system:serviceaccount:monitoring:kube-prometheus-stack-alertmanager"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(var.eks_oidc_provider_url, "https://", "")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "alertmanager_irsa" {
+  count              = var.enable_irsa ? 1 : 0
+  name               = "${var.project_name}-alertmanager-irsa-role"
+  assume_role_policy = data.aws_iam_policy_document.eks_irsa_trust_alertmanager[0].json
+  description        = "IRSA role for Alertmanager to publish alerts to SNS"
+
+  tags = {
+    Name        = "${var.project_name}-alertmanager-irsa-role"
+    Environment = var.environment
+  }
+}
+
+resource "aws_iam_policy" "alertmanager_sns_policy" {
+  count       = var.enable_irsa ? 1 : 0
+  name        = "${var.project_name}-alertmanager-sns-policy"
+  description = "Allows Alertmanager to publish to the admin-operational-alerts SNS topic"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "SNSPublishAlerts"
+        Effect = "Allow"
+        Action = ["sns:Publish"]
+        Resource = [
+          "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.project_name}-${var.environment}-admin-operational-alerts"
+        ]
+      },
+      {
+        Sid      = "KMSDecryptForSNS"
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:GenerateDataKey*"]
+        Resource = [var.sns_kms_key_arn]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "alertmanager_sns_attach" {
+  count      = var.enable_irsa ? 1 : 0
+  role       = aws_iam_role.alertmanager_irsa[0].name
+  policy_arn = aws_iam_policy.alertmanager_sns_policy[0].arn
+}

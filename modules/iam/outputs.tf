@@ -58,3 +58,13 @@ output "commerce_irsa_role_arn" {
   value       = length(aws_iam_role.commerce_irsa) > 0 ? aws_iam_role.commerce_irsa[0].arn : ""
   description = "ARN of the Commerce Service EKS IRSA role"
 }
+
+output "cloudwatch_agent_irsa_role_arn" {
+  value       = length(aws_iam_role.cloudwatch_agent_irsa) > 0 ? aws_iam_role.cloudwatch_agent_irsa[0].arn : ""
+  description = "ARN of the CloudWatch Agent IRSA role (used by amazon-cloudwatch-observability addon)"
+}
+
+output "alertmanager_irsa_role_arn" {
+  value       = length(aws_iam_role.alertmanager_irsa) > 0 ? aws_iam_role.alertmanager_irsa[0].arn : ""
+  description = "ARN of the Alertmanager IRSA role (used by kube-prometheus-stack Alertmanager)"
+}

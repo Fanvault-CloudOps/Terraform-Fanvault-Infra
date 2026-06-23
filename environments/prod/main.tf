@@ -226,6 +226,72 @@ module "eks_monitoring" {
   depends_on = [module.notifications, module.event_processing]
 }
 
+module "eks_addons" {
+  source           = "../../modules/eks_addons"
+  cluster_name     = module.eks.cluster_name
+  cluster_endpoint = module.eks.cluster_endpoint
+  cluster_ca_data  = module.eks.cluster_certificate_authority_data
+
+  project_name              = var.project_name
+  environment               = var.environment
+  aws_region                = var.aws_region
+  cloudwatch_agent_role_arn = module.iam.cloudwatch_agent_irsa_role_arn
+
+  enable_metrics_server           = true
+  enable_cloudwatch_observability = true
+  enable_vpa                      = true
+
+  depends_on = [module.eks, module.iam]
+}
+
+module "observability" {
+  source       = "../../modules/observability"
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+
+  sns_topic_arn              = module.notifications.sns_topic_admin_operational_alert_arn
+  sns_key_arn                = module.notifications.sns_key_arn
+  alertmanager_irsa_role_arn = module.iam.alertmanager_irsa_role_arn
+
+  prometheus_retention_days = var.prometheus_retention_days
+  prometheus_storage_size   = "20Gi"
+  grafana_storage_size      = "10Gi"
+  alertmanager_storage_size = "5Gi"
+
+  depends_on = [module.eks_addons, module.notifications]
+}
+
+module "loki" {
+  source       = "../../modules/loki"
+  project_name = var.project_name
+  environment  = var.environment
+  cluster_name = module.eks.cluster_name
+
+  loki_retention_hours = var.loki_retention_hours
+  loki_storage_size    = "20Gi"
+
+  depends_on = [module.eks_addons]
+}
+
+module "karpenter" {
+  source                = "../../modules/karpenter"
+  cluster_name          = module.eks.cluster_name
+  cluster_endpoint      = module.eks.cluster_endpoint
+  eks_oidc_provider_arn = module.eks.oidc_provider_arn
+  eks_oidc_provider_url = module.eks.oidc_provider_url
+  node_iam_role_name    = module.eks.node_role_name
+  node_iam_role_arn     = module.eks.node_role_arn
+
+  project_name     = var.project_name
+  environment      = var.environment
+  aws_region       = var.aws_region
+  max_nodes_cpu    = var.karpenter_max_cpu
+  max_nodes_memory = var.karpenter_max_memory
+
+  depends_on = [module.eks, module.iam]
+}
+
 module "configuration" {
   source       = "../../modules/configuration"
   project_name = var.project_name
