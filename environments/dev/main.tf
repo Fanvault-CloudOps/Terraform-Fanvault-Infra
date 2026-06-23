@@ -331,3 +331,18 @@ module "configuration" {
 
   depends_on = [module.notifications, module.event_processing]
 }
+
+resource "aws_iam_role_policy" "ai_bedrock_cross_account" {
+  name = "${var.project_name}-${var.environment}-ai-bedrock-cross-account"
+  role = "${var.project_name}-ai-irsa-role"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid      = "AssumeBedrockRole"
+      Effect   = "Allow"
+      Action   = "sts:AssumeRole"
+      Resource = "arn:aws:iam::899071933396:role/fanvault-bedrock-cross-account-role"
+    }]
+  })
+}
