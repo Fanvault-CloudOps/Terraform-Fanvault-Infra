@@ -27,10 +27,10 @@ resource "aws_eks_cluster" "cluster" {
 }
 
 resource "aws_eks_node_group" "nodes" {
-  cluster_name    = aws_eks_cluster.cluster.name
-  node_group_name = "${var.project_name}-${var.environment}-node-group"
-  node_role_arn   = aws_iam_role.node_role.arn
-  subnet_ids      = var.private_subnet_ids
+  cluster_name         = aws_eks_cluster.cluster.name
+  node_group_name_prefix = "${var.project_name}-${var.environment}-node-group-"
+  node_role_arn        = aws_iam_role.node_role.arn
+  subnet_ids           = var.private_subnet_ids
 
   scaling_config {
     desired_size = var.desired_capacity
@@ -39,6 +39,10 @@ resource "aws_eks_node_group" "nodes" {
   }
 
   instance_types = var.instance_types
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   depends_on = [
     aws_iam_role_policy_attachment.node_worker,

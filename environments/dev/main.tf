@@ -20,7 +20,7 @@ module "eks" {
   desired_capacity   = 3
   max_capacity       = 4
   min_capacity       = 3
-  instance_types     = ["t3.medium"]
+  instance_types     = ["t2.large"]
 }
 
 module "dynamodb" {
