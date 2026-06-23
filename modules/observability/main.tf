@@ -272,146 +272,169 @@ resource "kubernetes_config_map" "dashboard_ai_service" {
 }
 
 # ── VPA Objects (recommendation-only) ─────────────────────────────────────────
-# updateMode: Off means VPA recommender computes suggestions but never mutates pods
-resource "kubernetes_manifest" "vpa_dev_user_service" {
-  manifest = {
-    apiVersion = "autoscaling.k8s.io/v1"
-    kind       = "VerticalPodAutoscaler"
-    metadata = {
-      name      = "dev-user-service-vpa"
-      namespace = "dev"
-    }
-    spec = {
-      targetRef = {
-        apiVersion = "apps/v1"
-        kind       = "Deployment"
-        name       = "dev-user-service"
-      }
-      updatePolicy = {
-        updateMode = "Off"
-      }
-      resourcePolicy = {
-        containerPolicies = [{
-          containerName = "*"
-          minAllowed = {
-            cpu    = "50m"
-            memory = "64Mi"
-          }
-          maxAllowed = {
-            cpu    = "1"
-            memory = "1Gi"
-          }
-        }]
-      }
-    }
+# VerticalPodAutoscaler CRDs are installed by the VPA Helm release in eks_addons,
+# which runs before this module (module-level depends_on in the environment).
+# kubernetes_manifest validates CRDs at plan time; null_resource + local-exec defers
+# to apply time when the CRDs already exist.
+resource "null_resource" "vpa_dev_user_service" {
+  triggers = {
+    name = "dev-user-service-vpa"
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      kubectl apply -f - <<'EOF'
+      apiVersion: autoscaling.k8s.io/v1
+      kind: VerticalPodAutoscaler
+      metadata:
+        name: dev-user-service-vpa
+        namespace: dev
+      spec:
+        targetRef:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: dev-user-service
+        updatePolicy:
+          updateMode: "Off"
+        resourcePolicy:
+          containerPolicies:
+            - containerName: "*"
+              minAllowed:
+                cpu: 50m
+                memory: 64Mi
+              maxAllowed:
+                cpu: "1"
+                memory: 1Gi
+      EOF
+    EOT
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "kubectl delete vpa dev-user-service-vpa -n dev --ignore-not-found=true"
   }
 
   depends_on = [helm_release.kube_prometheus_stack]
 }
 
-resource "kubernetes_manifest" "vpa_dev_commerce_service" {
-  manifest = {
-    apiVersion = "autoscaling.k8s.io/v1"
-    kind       = "VerticalPodAutoscaler"
-    metadata = {
-      name      = "dev-commerce-service-vpa"
-      namespace = "dev"
-    }
-    spec = {
-      targetRef = {
-        apiVersion = "apps/v1"
-        kind       = "Deployment"
-        name       = "dev-commerce-service"
-      }
-      updatePolicy = {
-        updateMode = "Off"
-      }
-      resourcePolicy = {
-        containerPolicies = [{
-          containerName = "*"
-          minAllowed = {
-            cpu    = "50m"
-            memory = "64Mi"
-          }
-          maxAllowed = {
-            cpu    = "1"
-            memory = "1Gi"
-          }
-        }]
-      }
-    }
+resource "null_resource" "vpa_dev_commerce_service" {
+  triggers = {
+    name = "dev-commerce-service-vpa"
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      kubectl apply -f - <<'EOF'
+      apiVersion: autoscaling.k8s.io/v1
+      kind: VerticalPodAutoscaler
+      metadata:
+        name: dev-commerce-service-vpa
+        namespace: dev
+      spec:
+        targetRef:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: dev-commerce-service
+        updatePolicy:
+          updateMode: "Off"
+        resourcePolicy:
+          containerPolicies:
+            - containerName: "*"
+              minAllowed:
+                cpu: 50m
+                memory: 64Mi
+              maxAllowed:
+                cpu: "1"
+                memory: 1Gi
+      EOF
+    EOT
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "kubectl delete vpa dev-commerce-service-vpa -n dev --ignore-not-found=true"
   }
 
   depends_on = [helm_release.kube_prometheus_stack]
 }
 
-resource "kubernetes_manifest" "vpa_dev_ai_service" {
-  manifest = {
-    apiVersion = "autoscaling.k8s.io/v1"
-    kind       = "VerticalPodAutoscaler"
-    metadata = {
-      name      = "dev-ai-service-vpa"
-      namespace = "dev"
-    }
-    spec = {
-      targetRef = {
-        apiVersion = "apps/v1"
-        kind       = "Deployment"
-        name       = "dev-ai-service"
-      }
-      updatePolicy = {
-        updateMode = "Off"
-      }
-      resourcePolicy = {
-        containerPolicies = [{
-          containerName = "*"
-          minAllowed = {
-            cpu    = "50m"
-            memory = "128Mi"
-          }
-          maxAllowed = {
-            cpu    = "2"
-            memory = "2Gi"
-          }
-        }]
-      }
-    }
+resource "null_resource" "vpa_dev_ai_service" {
+  triggers = {
+    name = "dev-ai-service-vpa"
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      kubectl apply -f - <<'EOF'
+      apiVersion: autoscaling.k8s.io/v1
+      kind: VerticalPodAutoscaler
+      metadata:
+        name: dev-ai-service-vpa
+        namespace: dev
+      spec:
+        targetRef:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: dev-ai-service
+        updatePolicy:
+          updateMode: "Off"
+        resourcePolicy:
+          containerPolicies:
+            - containerName: "*"
+              minAllowed:
+                cpu: 50m
+                memory: 128Mi
+              maxAllowed:
+                cpu: "2"
+                memory: 2Gi
+      EOF
+    EOT
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "kubectl delete vpa dev-ai-service-vpa -n dev --ignore-not-found=true"
   }
 
   depends_on = [helm_release.kube_prometheus_stack]
 }
 
-resource "kubernetes_manifest" "vpa_dev_frontend" {
-  manifest = {
-    apiVersion = "autoscaling.k8s.io/v1"
-    kind       = "VerticalPodAutoscaler"
-    metadata = {
-      name      = "dev-frontend-vpa"
-      namespace = "dev"
-    }
-    spec = {
-      targetRef = {
-        apiVersion = "apps/v1"
-        kind       = "Deployment"
-        name       = "dev-frontend"
-      }
-      updatePolicy = {
-        updateMode = "Off"
-      }
-      resourcePolicy = {
-        containerPolicies = [{
-          containerName = "*"
-          minAllowed = {
-            cpu    = "50m"
-            memory = "64Mi"
-          }
-          maxAllowed = {
-            cpu    = "500m"
-            memory = "512Mi"
-          }
-        }]
-      }
-    }
+resource "null_resource" "vpa_dev_frontend" {
+  triggers = {
+    name = "dev-frontend-vpa"
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      kubectl apply -f - <<'EOF'
+      apiVersion: autoscaling.k8s.io/v1
+      kind: VerticalPodAutoscaler
+      metadata:
+        name: dev-frontend-vpa
+        namespace: dev
+      spec:
+        targetRef:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: dev-frontend
+        updatePolicy:
+          updateMode: "Off"
+        resourcePolicy:
+          containerPolicies:
+            - containerName: "*"
+              minAllowed:
+                cpu: 50m
+                memory: 64Mi
+              maxAllowed:
+                cpu: 500m
+                memory: 512Mi
+      EOF
+    EOT
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "kubectl delete vpa dev-frontend-vpa -n dev --ignore-not-found=true"
   }
 
   depends_on = [helm_release.kube_prometheus_stack]
