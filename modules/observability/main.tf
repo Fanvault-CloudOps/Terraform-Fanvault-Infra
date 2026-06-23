@@ -38,6 +38,16 @@ locals {
 }
 
 # ── kube-prometheus-stack ─────────────────────────────────────────────────────
+# Wipe any stale Helm release secrets left by killed applies before installing.
+# cleanup_on_fail only runs when Helm itself exits cleanly; an external kill
+# (Ctrl-C, OOM, timeout) leaves the secret behind and blocks the next apply.
+resource "null_resource" "helm_secret_cleanup" {
+  triggers = { always_run = timestamp() }
+  provisioner "local-exec" {
+    command = "kubectl delete secret -n monitoring -l owner=helm,name=kube-prometheus-stack --ignore-not-found 2>/dev/null || true"
+  }
+}
+
 resource "helm_release" "kube_prometheus_stack" {
   name             = "kube-prometheus-stack"
   repository       = "https://prometheus-community.github.io/helm-charts"
@@ -49,6 +59,8 @@ resource "helm_release" "kube_prometheus_stack" {
   timeout          = 600
 
   values = [templatefile("${path.module}/values/kube-prometheus-stack.yaml.tpl", local.helm_vars)]
+
+  depends_on = [null_resource.helm_secret_cleanup]
 }
 
 # ── Grafana Dashboards (ConfigMap auto-discovery) ─────────────────────────────
