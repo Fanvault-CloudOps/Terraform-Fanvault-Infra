@@ -147,10 +147,8 @@ grafana:
       reporting_enabled: false
     security:
       allow_embedding: true
-    alerting:
-      enabled: true
     unified_alerting:
-      enabled: false
+      enabled: true
 
 ## ── Prometheus Rules (additional) ────────────────────────────────────────────
 additionalPrometheusRulesMap:

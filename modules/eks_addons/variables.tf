@@ -34,6 +34,11 @@ variable "cloudwatch_agent_role_arn" {
   description = "IRSA role ARN for the CloudWatch agent service account"
 }
 
+variable "ebs_csi_role_arn" {
+  type        = string
+  description = "IRSA role ARN for the EBS CSI driver service account"
+}
+
 variable "enable_metrics_server" {
   type        = bool
   description = "Deploy metrics-server (required for HPA)"

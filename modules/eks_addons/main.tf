@@ -57,6 +57,22 @@ resource "aws_eks_addon" "cloudwatch_observability" {
   }
 }
 
+# ── EBS CSI Driver ───────────────────────────────────────────────────────────
+# Required in EKS 1.23+ — in-tree aws-ebs provisioner is migrated to CSI.
+# Without this addon, gp2/gp3 PVCs hang waiting for ebs.csi.aws.com provisioner.
+resource "aws_eks_addon" "ebs_csi_driver" {
+  cluster_name             = var.cluster_name
+  addon_name               = "aws-ebs-csi-driver"
+  service_account_role_arn = var.ebs_csi_role_arn
+  resolve_conflicts_on_update = "OVERWRITE"
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-ebs-csi-driver"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
 # ── Vertical Pod Autoscaler (recommendation-only) ────────────────────────────
 # updater and admissionController disabled — only the recommender runs.
 # kubectl describe vpa <name> -n <ns> shows right-sizing suggestions without mutating pods.

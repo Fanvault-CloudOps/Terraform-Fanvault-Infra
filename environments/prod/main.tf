@@ -237,6 +237,7 @@ module "eks_addons" {
   environment               = var.environment
   aws_region                = var.aws_region
   cloudwatch_agent_role_arn = module.iam.cloudwatch_agent_irsa_role_arn
+  ebs_csi_role_arn          = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-${var.environment}-ebs-csi-role"
 
   enable_metrics_server           = true
   enable_cloudwatch_observability = true
