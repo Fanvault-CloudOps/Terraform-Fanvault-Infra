@@ -86,3 +86,12 @@ test:
 # Gateway is not needed for single-binary mode with direct Promtail connection
 gateway:
   enabled: false
+
+# Disable built-in caches — SingleBinary mode uses an in-process cache.
+# Without this, the chart still creates chunks-cache and results-cache StatefulSets
+# which consume pod slots that are scarce on t3.medium nodes.
+chunksCache:
+  enabled: false
+
+resultsCache:
+  enabled: false

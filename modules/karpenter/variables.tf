@@ -47,7 +47,7 @@ variable "aws_region" {
 variable "karpenter_version" {
   type        = string
   description = "Karpenter Helm chart version"
-  default     = "1.1.1"
+  default     = "1.5.3"
 }
 
 variable "max_nodes_cpu" {

@@ -20,7 +20,6 @@ resource "null_resource" "node_pool" {
         template:
           metadata:
             labels:
-              karpenter.sh/nodepool: ${var.project_name}-default
               Environment: ${var.environment}
           spec:
             nodeClassRef:
