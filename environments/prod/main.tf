@@ -92,6 +92,7 @@ module "iam" {
 
   sns_topic_low_inventory_arn          = "arn:aws:sns:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${var.project_name}-${var.environment}-low-inventory-alerts"
   sns_topic_product_upload_failure_arn = "arn:aws:sns:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${var.project_name}-${var.environment}-product-upload-failures"
+  sns_kms_key_arn                      = "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alias/${var.project_name}-${var.environment}-sns-key"
 }
 
 module "ecr" {

@@ -464,7 +464,7 @@ resource "aws_iam_policy" "alertmanager_sns_policy" {
         Sid      = "KMSDecryptForSNS"
         Effect   = "Allow"
         Action   = ["kms:Decrypt", "kms:GenerateDataKey*"]
-        Resource = [var.sns_kms_key_arn]
+        Resource = var.sns_kms_key_arn != "" ? [var.sns_kms_key_arn] : ["*"]
       }
     ]
   })

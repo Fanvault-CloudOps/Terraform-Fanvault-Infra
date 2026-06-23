@@ -91,9 +91,11 @@ module "iam" {
   dynamodb_table_audit_logs_arn = module.dynamodb.audit_logs_table_arn
   s3_bucket_product_images_arn  = module.s3.bucket_arn
 
-  # SNS ARNs — constructed from naming convention to avoid circular dependency with notifications module
+  # SNS ARNs and KMS key ARN — constructed from naming convention to avoid circular
+  # dependency: module.notifications also depends on module.iam (sns_feedback_role_arn)
   sns_topic_low_inventory_arn          = "arn:aws:sns:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${var.project_name}-${var.environment}-low-inventory-alerts"
   sns_topic_product_upload_failure_arn = "arn:aws:sns:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${var.project_name}-${var.environment}-product-upload-failures"
+  sns_kms_key_arn                      = "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alias/${var.project_name}-${var.environment}-sns-key"
 }
 
 module "ecr" {
