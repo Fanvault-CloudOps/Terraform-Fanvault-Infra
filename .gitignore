@@ -3,6 +3,8 @@
 .terraform/
 .terraform.lock.hcl
 override.tf
+tfplan*
+*.tfplan
 override.tf.json
 *_override.tf
 *_override.tf.json
