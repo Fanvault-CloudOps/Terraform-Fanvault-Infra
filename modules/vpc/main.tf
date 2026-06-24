@@ -31,10 +31,10 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-public-${var.availability_zones[count.index]}"
-    Environment = var.environment
-    Owner       = var.owner
-    Project     = var.project_name
+    Name                     = "${var.project_name}-${var.environment}-public-${var.availability_zones[count.index]}"
+    Environment              = var.environment
+    Owner                    = var.owner
+    Project                  = var.project_name
     "kubernetes.io/role/elb" = "1"
   }
 }
@@ -46,10 +46,10 @@ resource "aws_subnet" "private" {
   availability_zone = var.availability_zones[count.index]
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-private-${var.availability_zones[count.index]}"
-    Environment = var.environment
-    Owner       = var.owner
-    Project     = var.project_name
+    Name                              = "${var.project_name}-${var.environment}-private-${var.availability_zones[count.index]}"
+    Environment                       = var.environment
+    Owner                             = var.owner
+    Project                           = var.project_name
     "kubernetes.io/role/internal-elb" = "1"
   }
 }

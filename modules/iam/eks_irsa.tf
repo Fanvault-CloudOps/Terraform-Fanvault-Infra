@@ -98,8 +98,8 @@ resource "aws_iam_policy" "user_dynamodb_policy" {
           "dynamodb:DescribeTable"
         ]
         Resource = [
-          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-profiles",
-          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-profiles/index/*"
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-${var.environment}-profiles",
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-${var.environment}-profiles/index/*"
         ]
       }
     ]
@@ -110,6 +110,32 @@ resource "aws_iam_role_policy_attachment" "user_dynamodb_attach" {
   count      = var.enable_irsa ? 1 : 0
   role       = aws_iam_role.user_irsa[0].name
   policy_arn = aws_iam_policy.user_dynamodb_policy[0].arn
+}
+
+resource "aws_iam_policy" "user_secrets_policy" {
+  count       = var.enable_irsa ? 1 : 0
+  name        = "${var.project_name}-user-secrets-policy"
+  description = "Allows user-service to read app secrets from Secrets Manager (production mode)"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "SecretsManagerReadAppSecrets"
+        Effect = "Allow"
+        Action = ["secretsmanager:GetSecretValue"]
+        Resource = [
+          "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}-*-app-secrets*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "user_secrets_attach" {
+  count      = var.enable_irsa ? 1 : 0
+  role       = aws_iam_role.user_irsa[0].name
+  policy_arn = aws_iam_policy.user_secrets_policy[0].arn
 }
 
 
@@ -150,14 +176,14 @@ resource "aws_iam_policy" "commerce_dynamodb_policy" {
           "dynamodb:DescribeTable"
         ]
         Resource = [
-          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-products",
-          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-products/index/*",
-          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-orders",
-          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-orders/index/*",
-          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-audit-logs",
-          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-audit-logs/index/*",
-          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-metadata",
-          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-metadata/index/*"
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-${var.environment}-products",
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-${var.environment}-products/index/*",
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-${var.environment}-orders",
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-${var.environment}-orders/index/*",
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-${var.environment}-audit-logs",
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-${var.environment}-audit-logs/index/*",
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-${var.environment}-metadata",
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-${var.environment}-metadata/index/*"
         ]
       },
       {
@@ -167,7 +193,7 @@ resource "aws_iam_policy" "commerce_dynamodb_policy" {
           "events:PutEvents"
         ]
         Resource = [
-          "arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:event-bus/${var.project_name}-event-bus"
+          "arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:event-bus/${var.project_name}-${var.environment}-event-bus"
         ]
       },
       {
@@ -177,10 +203,10 @@ resource "aws_iam_policy" "commerce_dynamodb_policy" {
           "sns:Publish"
         ]
         Resource = [
-          "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.project_name}-low-inventory-alerts",
-          "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.project_name}-order-failure-alerts",
-          "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.project_name}-product-upload-failures",
-          "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.project_name}-admin-operational-alerts"
+          "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.project_name}-${var.environment}-low-inventory-alerts",
+          "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.project_name}-${var.environment}-order-failure-alerts",
+          "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.project_name}-${var.environment}-product-upload-failures",
+          "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.project_name}-${var.environment}-admin-operational-alerts"
         ]
       },
       {
@@ -204,7 +230,7 @@ resource "aws_iam_policy" "commerce_dynamodb_policy" {
           "s3:DeleteObject"
         ]
         Resource = [
-          "arn:aws:s3:::${var.project_name}-product-images-*/*"
+          "arn:aws:s3:::${var.project_name}-${var.environment}-product-images-*/*"
         ]
       },
       {
@@ -214,9 +240,17 @@ resource "aws_iam_policy" "commerce_dynamodb_policy" {
           "s3:ListBucket"
         ]
         Resource = [
-          "arn:aws:s3:::${var.project_name}-product-images-*"
+          "arn:aws:s3:::${var.project_name}-${var.environment}-product-images-*"
         ]
       },
+      {
+        Sid    = "SecretsManagerReadAppSecrets"
+        Effect = "Allow"
+        Action = ["secretsmanager:GetSecretValue"]
+        Resource = [
+          "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}-*-app-secrets*"
+        ]
+      }
     ]
   })
 }
@@ -245,7 +279,7 @@ data "aws_iam_policy_document" "eks_irsa_trust_ai" {
       test     = "StringEquals"
       variable = "${replace(var.eks_oidc_provider_url, "https://", "")}:sub"
       values = [
-        "system:serviceaccount:dev:ai-service",
+        "system:serviceaccount:dev:dev-ai-service",
         "system:serviceaccount:prod:ai-service"
       ]
     }
@@ -303,7 +337,7 @@ resource "aws_iam_policy" "ai_service_policy" {
         Effect = "Allow"
         Action = ["s3:GetObject"]
         Resource = [
-          "arn:aws:s3:::${var.project_name}-product-images-*/*"
+          "arn:aws:s3:::${var.project_name}-${var.environment}-product-images-*/*"
         ]
       },
       {
@@ -322,4 +356,122 @@ resource "aws_iam_role_policy_attachment" "ai_service_policy_attach" {
   count      = var.enable_irsa ? 1 : 0
   role       = aws_iam_role.ai_irsa[0].name
   policy_arn = aws_iam_policy.ai_service_policy[0].arn
+}
+
+# ── 4. CloudWatch Agent IRSA Role ─────────────────────────────────────────────
+# Used by the amazon-cloudwatch-observability EKS addon (Container Insights + Fluent Bit)
+data "aws_iam_policy_document" "eks_irsa_trust_cloudwatch_agent" {
+  count = var.enable_irsa ? 1 : 0
+
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [var.eks_oidc_provider_arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(var.eks_oidc_provider_url, "https://", "")}:sub"
+      values   = ["system:serviceaccount:amazon-cloudwatch:cloudwatch-agent"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(var.eks_oidc_provider_url, "https://", "")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "cloudwatch_agent_irsa" {
+  count              = var.enable_irsa ? 1 : 0
+  name               = "${var.project_name}-cloudwatch-agent-irsa-role"
+  assume_role_policy = data.aws_iam_policy_document.eks_irsa_trust_cloudwatch_agent[0].json
+  description        = "IRSA role for CloudWatch Agent (Container Insights + Fluent Bit)"
+
+  tags = {
+    Name        = "${var.project_name}-cloudwatch-agent-irsa-role"
+    Environment = var.environment
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent_server_policy" {
+  count      = var.enable_irsa ? 1 : 0
+  role       = aws_iam_role.cloudwatch_agent_irsa[0].name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+# ── 5. Alertmanager SNS IRSA Role ─────────────────────────────────────────────
+# Used by kube-prometheus-stack Alertmanager to publish alerts to SNS via sigv4
+data "aws_iam_policy_document" "eks_irsa_trust_alertmanager" {
+  count = var.enable_irsa ? 1 : 0
+
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [var.eks_oidc_provider_arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(var.eks_oidc_provider_url, "https://", "")}:sub"
+      values   = ["system:serviceaccount:monitoring:kube-prometheus-stack-alertmanager"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(var.eks_oidc_provider_url, "https://", "")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "alertmanager_irsa" {
+  count              = var.enable_irsa ? 1 : 0
+  name               = "${var.project_name}-alertmanager-irsa-role"
+  assume_role_policy = data.aws_iam_policy_document.eks_irsa_trust_alertmanager[0].json
+  description        = "IRSA role for Alertmanager to publish alerts to SNS"
+
+  tags = {
+    Name        = "${var.project_name}-alertmanager-irsa-role"
+    Environment = var.environment
+  }
+}
+
+resource "aws_iam_policy" "alertmanager_sns_policy" {
+  count       = var.enable_irsa ? 1 : 0
+  name        = "${var.project_name}-alertmanager-sns-policy"
+  description = "Allows Alertmanager to publish to the admin-operational-alerts SNS topic"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "SNSPublishAlerts"
+        Effect = "Allow"
+        Action = ["sns:Publish"]
+        Resource = [
+          "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.project_name}-${var.environment}-admin-operational-alerts"
+        ]
+      },
+      {
+        Sid      = "KMSDecryptForSNS"
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:GenerateDataKey*"]
+        Resource = var.sns_kms_key_arn != "" ? [var.sns_kms_key_arn] : ["*"]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "alertmanager_sns_attach" {
+  count      = var.enable_irsa ? 1 : 0
+  role       = aws_iam_role.alertmanager_irsa[0].name
+  policy_arn = aws_iam_policy.alertmanager_sns_policy[0].arn
 }

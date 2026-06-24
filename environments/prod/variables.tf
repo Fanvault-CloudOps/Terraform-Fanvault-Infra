@@ -33,3 +33,22 @@ variable "jwt_refresh_secret" {
   description = "JWT refresh token signing secret (minimum 32 chars, must differ from jwt_secret)"
   sensitive   = true
 }
+
+variable "karpenter_max_cpu" {
+  type        = string
+  description = "Maximum total CPU across all Karpenter-provisioned nodes"
+  default     = "40"
+}
+
+variable "karpenter_max_memory" {
+  type        = string
+  description = "Maximum total memory across all Karpenter-provisioned nodes"
+  default     = "80Gi"
+}
+
+variable "prometheus_retention_days" {
+  type        = number
+  description = "Prometheus data retention in days"
+  default     = 30
+}
+

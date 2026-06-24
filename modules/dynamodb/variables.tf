@@ -9,18 +9,18 @@ variable "environment" {
 }
 
 variable "billing_mode" {
-  type        = string
-  default     = "PAY_PER_REQUEST"
+  type    = string
+  default = "PAY_PER_REQUEST"
 }
 
 variable "enable_pitr" {
-  type        = bool
-  default     = true
+  type    = bool
+  default = true
 }
 
 variable "enable_encryption" {
-  type        = bool
-  default     = true
+  type    = bool
+  default = true
 }
 
 variable "owner" {

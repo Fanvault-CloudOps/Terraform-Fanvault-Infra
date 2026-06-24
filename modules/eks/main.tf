@@ -10,12 +10,16 @@ resource "aws_eks_cluster" "cluster" {
     endpoint_public_access  = true
   }
 
-  # API_AND_CONFIG_MAP: keeps existing aws-auth ConfigMap entries working
-  # while enabling the Access Entries API (required for CI role to reach the cluster).
-  # This is a one-way upgrade — cannot revert to CONFIG_MAP only.
+  # Upgrade auth mode so the Access Entries API works alongside aws-auth ConfigMap.
+  # bootstrap_cluster_creator_admin_permissions MUST be set explicitly here — omitting
+  # it causes Terraform to read the stored value (true) and plan true->null, which is
+  # ForceNew and would destroy the running cluster.
   access_config {
-    authentication_mode = "API_AND_CONFIG_MAP"
+    authentication_mode                         = "API_AND_CONFIG_MAP"
+    bootstrap_cluster_creator_admin_permissions = true
   }
+
+  enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   depends_on = [
     aws_iam_role_policy_attachment.cluster_policy
@@ -23,10 +27,10 @@ resource "aws_eks_cluster" "cluster" {
 }
 
 resource "aws_eks_node_group" "nodes" {
-  cluster_name    = aws_eks_cluster.cluster.name
-  node_group_name = "${var.project_name}-${var.environment}-node-group"
-  node_role_arn   = aws_iam_role.node_role.arn
-  subnet_ids      = var.private_subnet_ids
+  cluster_name         = aws_eks_cluster.cluster.name
+  node_group_name_prefix = "${var.project_name}-${var.environment}-node-group-"
+  node_role_arn        = aws_iam_role.node_role.arn
+  subnet_ids           = var.private_subnet_ids
 
   scaling_config {
     desired_size = var.desired_capacity
@@ -35,6 +39,10 @@ resource "aws_eks_node_group" "nodes" {
   }
 
   instance_types = var.instance_types
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   depends_on = [
     aws_iam_role_policy_attachment.node_worker,

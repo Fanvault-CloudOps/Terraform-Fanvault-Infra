@@ -11,13 +11,13 @@ resource "aws_kms_key" "sns_key" {
   policy                  = data.aws_iam_policy_document.sns_kms_policy.json
 
   tags = {
-    Name        = "${var.project_name}-sns-key"
+    Name        = "${var.project_name}-${var.environment}-sns-key"
     Environment = var.environment
   }
 }
 
 resource "aws_kms_alias" "sns_key_alias" {
-  name          = "alias/${var.project_name}-sns-key"
+  name          = "alias/${var.project_name}-${var.environment}-sns-key"
   target_key_id = aws_kms_key.sns_key.key_id
 }
 
@@ -82,13 +82,13 @@ data "aws_iam_policy_document" "sns_kms_policy" {
 # SQS Dead-Letter Queue for SNS Subscription Failures
 # -----------------------------------------------------------------------------
 resource "aws_sqs_queue" "sns_dlq" {
-  name                      = "${var.project_name}-sns-dlq"
+  name                      = "${var.project_name}-${var.environment}-sns-dlq"
   kms_master_key_id         = aws_kms_key.sns_key.id
   message_retention_seconds = 1209600 # 14 days
   receive_wait_time_seconds = 20
 
   tags = {
-    Name        = "${var.project_name}-sns-dlq"
+    Name        = "${var.project_name}-${var.environment}-sns-dlq"
     Environment = var.environment
   }
 }
@@ -115,69 +115,69 @@ data "aws_iam_policy_document" "sns_dlq_policy_doc" {
 # SNS Topics
 # -----------------------------------------------------------------------------
 resource "aws_sns_topic" "low_inventory" {
-  name              = "${var.project_name}-low-inventory-alerts"
+  name              = "${var.project_name}-${var.environment}-low-inventory-alerts"
   kms_master_key_id = aws_kms_key.sns_key.id
 
   sqs_success_feedback_role_arn       = var.sns_feedback_role_arn
   sqs_failure_feedback_role_arn       = var.sns_feedback_role_arn
   lambda_success_feedback_role_arn    = var.sns_feedback_role_arn
   lambda_failure_feedback_role_arn    = var.sns_feedback_role_arn
-  sqs_success_feedback_sample_rate    = 100
-  lambda_success_feedback_sample_rate = 100
+  sqs_success_feedback_sample_rate    = var.sns_feedback_role_arn != null ? 100 : null
+  lambda_success_feedback_sample_rate = var.sns_feedback_role_arn != null ? 100 : null
 
   tags = {
-    Name        = "${var.project_name}-low-inventory-alerts"
+    Name        = "${var.project_name}-${var.environment}-low-inventory-alerts"
     Environment = var.environment
   }
 }
 
 resource "aws_sns_topic" "order_failure" {
-  name              = "${var.project_name}-order-failure-alerts"
+  name              = "${var.project_name}-${var.environment}-order-failure-alerts"
   kms_master_key_id = aws_kms_key.sns_key.id
 
   sqs_success_feedback_role_arn       = var.sns_feedback_role_arn
   sqs_failure_feedback_role_arn       = var.sns_feedback_role_arn
   lambda_success_feedback_role_arn    = var.sns_feedback_role_arn
   lambda_failure_feedback_role_arn    = var.sns_feedback_role_arn
-  sqs_success_feedback_sample_rate    = 100
-  lambda_success_feedback_sample_rate = 100
+  sqs_success_feedback_sample_rate    = var.sns_feedback_role_arn != null ? 100 : null
+  lambda_success_feedback_sample_rate = var.sns_feedback_role_arn != null ? 100 : null
 
   tags = {
-    Name        = "${var.project_name}-order-failure-alerts"
+    Name        = "${var.project_name}-${var.environment}-order-failure-alerts"
     Environment = var.environment
   }
 }
 
 resource "aws_sns_topic" "product_upload" {
-  name              = "${var.project_name}-product-upload-failures"
+  name              = "${var.project_name}-${var.environment}-product-upload-failures"
   kms_master_key_id = aws_kms_key.sns_key.id
 
   sqs_success_feedback_role_arn       = var.sns_feedback_role_arn
   sqs_failure_feedback_role_arn       = var.sns_feedback_role_arn
   lambda_success_feedback_role_arn    = var.sns_feedback_role_arn
   lambda_failure_feedback_role_arn    = var.sns_feedback_role_arn
-  sqs_success_feedback_sample_rate    = 100
-  lambda_success_feedback_sample_rate = 100
+  sqs_success_feedback_sample_rate    = var.sns_feedback_role_arn != null ? 100 : null
+  lambda_success_feedback_sample_rate = var.sns_feedback_role_arn != null ? 100 : null
 
   tags = {
-    Name        = "${var.project_name}-product-upload-failures"
+    Name        = "${var.project_name}-${var.environment}-product-upload-failures"
     Environment = var.environment
   }
 }
 
 resource "aws_sns_topic" "admin_operational" {
-  name              = "${var.project_name}-admin-operational-alerts"
+  name              = "${var.project_name}-${var.environment}-admin-operational-alerts"
   kms_master_key_id = aws_kms_key.sns_key.id
 
   sqs_success_feedback_role_arn       = var.sns_feedback_role_arn
   sqs_failure_feedback_role_arn       = var.sns_feedback_role_arn
   lambda_success_feedback_role_arn    = var.sns_feedback_role_arn
   lambda_failure_feedback_role_arn    = var.sns_feedback_role_arn
-  sqs_success_feedback_sample_rate    = 100
-  lambda_success_feedback_sample_rate = 100
+  sqs_success_feedback_sample_rate    = var.sns_feedback_role_arn != null ? 100 : null
+  lambda_success_feedback_sample_rate = var.sns_feedback_role_arn != null ? 100 : null
 
   tags = {
-    Name        = "${var.project_name}-admin-operational-alerts"
+    Name        = "${var.project_name}-${var.environment}-admin-operational-alerts"
     Environment = var.environment
   }
 }
@@ -186,49 +186,49 @@ resource "aws_sns_topic" "admin_operational" {
 # Primary SQS Queues (Subscribed to topics to capture alerts)
 # -----------------------------------------------------------------------------
 resource "aws_sqs_queue" "low_inventory_queue" {
-  name                      = "${var.project_name}-low-inventory-alerts-queue"
+  name                      = "${var.project_name}-${var.environment}-low-inventory-alerts-queue"
   kms_master_key_id         = aws_kms_key.sns_key.id
   message_retention_seconds = 1209600
   receive_wait_time_seconds = 20
 
   tags = {
-    Name        = "${var.project_name}-low-inventory-alerts-queue"
+    Name        = "${var.project_name}-${var.environment}-low-inventory-alerts-queue"
     Environment = var.environment
   }
 }
 
 resource "aws_sqs_queue" "order_failure_queue" {
-  name                      = "${var.project_name}-order-failure-alerts-queue"
+  name                      = "${var.project_name}-${var.environment}-order-failure-alerts-queue"
   kms_master_key_id         = aws_kms_key.sns_key.id
   message_retention_seconds = 1209600
   receive_wait_time_seconds = 20
 
   tags = {
-    Name        = "${var.project_name}-order-failure-alerts-queue"
+    Name        = "${var.project_name}-${var.environment}-order-failure-alerts-queue"
     Environment = var.environment
   }
 }
 
 resource "aws_sqs_queue" "product_upload_queue" {
-  name                      = "${var.project_name}-product-upload-failures-queue"
+  name                      = "${var.project_name}-${var.environment}-product-upload-failures-queue"
   kms_master_key_id         = aws_kms_key.sns_key.id
   message_retention_seconds = 1209600
   receive_wait_time_seconds = 20
 
   tags = {
-    Name        = "${var.project_name}-product-upload-failures-queue"
+    Name        = "${var.project_name}-${var.environment}-product-upload-failures-queue"
     Environment = var.environment
   }
 }
 
 resource "aws_sqs_queue" "admin_operational_queue" {
-  name                      = "${var.project_name}-admin-operational-alerts-queue"
+  name                      = "${var.project_name}-${var.environment}-admin-operational-alerts-queue"
   kms_master_key_id         = aws_kms_key.sns_key.id
   message_retention_seconds = 1209600
   receive_wait_time_seconds = 20
 
   tags = {
-    Name        = "${var.project_name}-admin-operational-alerts-queue"
+    Name        = "${var.project_name}-${var.environment}-admin-operational-alerts-queue"
     Environment = var.environment
   }
 }
@@ -357,4 +357,39 @@ resource "aws_sns_topic_subscription" "admin_operational_email" {
   topic_arn = aws_sns_topic.admin_operational.arn
   protocol  = "email"
   endpoint  = var.alert_email
+}
+
+# -----------------------------------------------------------------------------
+# SNS Topic Policy — Allow EventBridge to Publish to Low Inventory Topic
+# Required for EventBridge rule that routes InventoryLow directly to SNS.
+# -----------------------------------------------------------------------------
+resource "aws_sns_topic_policy" "low_inventory_allow_eventbridge" {
+  arn    = aws_sns_topic.low_inventory.arn
+  policy = data.aws_iam_policy_document.low_inventory_topic_policy.json
+}
+
+data "aws_iam_policy_document" "low_inventory_topic_policy" {
+  # Root account retains full access as topic owner even with explicit policy;
+  # this statement is required to preserve that access when setting a topic policy.
+  statement {
+    sid       = "AllowAccountOwnerAccess"
+    effect    = "Allow"
+    actions   = ["sns:Publish", "sns:Subscribe", "sns:GetTopicAttributes", "sns:SetTopicAttributes", "sns:DeleteTopic", "sns:ListSubscriptionsByTopic"]
+    resources = [aws_sns_topic.low_inventory.arn]
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+  }
+
+  statement {
+    sid       = "AllowEventBridgeToPublish"
+    effect    = "Allow"
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.low_inventory.arn]
+    principals {
+      type        = "Service"
+      identifiers = ["events.amazonaws.com"]
+    }
+  }
 }
